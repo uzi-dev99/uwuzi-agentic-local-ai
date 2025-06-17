@@ -1,0 +1,284 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
+
+@layer base {
+  :root,
+  .dark {
+    --background: 25 10% 12%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 25 10% 12%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 265 90% 60%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 217.2 32.6% 13.5%; /* Más oscuro para la burbuja del bot */
+    --secondary-foreground: 0 0% 100%; /* Texto completamente blanco para el bot en modo oscuro */
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 145 100% 60%;
+    --accent-foreground: 25 10% 12%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 25.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 265 90% 60%;
+
+    --radius: 0.5rem;
+
+    --background-gradient: radial-gradient(at 20% 80%, hsla(265, 90%, 60%, 0.1), transparent 50%),
+      radial-gradient(at 80% 20%, hsla(145, 100%, 60%, 0.1), transparent 50%),
+      linear-gradient(to bottom right, #111115, #1C1B22);
+
+    /* Chat-specific background - different positioning for visual distinction */
+    --chat-background-gradient: radial-gradient(at 40% 60%, hsla(265, 90%, 60%, 0.08), transparent 50%),
+      radial-gradient(at 60% 40%, hsla(145, 100%, 60%, 0.08), transparent 50%),
+      linear-gradient(to bottom left, #0F0F13, #191820);
+
+    /* Chat-specific variables */
+    --chat-input-background: 217.2 32.6% 17.5%;
+    --chat-input-foreground: 210 40% 98%;
+    --chat-input-placeholder-foreground: 215 20.2% 65.1%;
+  }
+
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 327 82% 60%;
+    --primary-foreground: 25 10% 12%;
+
+    --secondary: 220 13% 94%;
+    --secondary-foreground: 222.2 84% 4.9%; /* Texto muy oscuro para el bot en modo claro */
+
+    --muted: 220 13% 94%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 207 100% 42%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 327 82% 60%;
+
+    --background-gradient: radial-gradient(at 20% 80%, hsla(327, 82%, 60%, 0.1), transparent 50%),
+      radial-gradient(at 80% 20%, hsla(207, 100%, 42%, 0.1), transparent 50%),
+      linear-gradient(to bottom right, hsl(0 0% 100%), hsl(220 14.3% 95.9%));
+
+    /* Chat-specific background for light mode */
+    --chat-background-gradient: radial-gradient(at 40% 60%, hsla(327, 82%, 60%, 0.08), transparent 50%),
+      radial-gradient(at 60% 40%, hsla(207, 100%, 42%, 0.08), transparent 50%),
+      linear-gradient(to bottom left, hsl(0 0% 98%), hsl(220 14.3% 92.9%));
+
+    /* Chat-specific variables */
+    --chat-input-background: 220 13% 94%;
+    --chat-input-foreground: 222.2 84% 4.9%;
+    --chat-input-placeholder-foreground: 215.4 16.3% 46.9%;
+  }
+  
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    background-image: var(--background-gradient);
+    font-family: 'Inter', sans-serif;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  /* ChatView specific background */
+  .chat-view-background {
+    background-image: var(--chat-background-gradient) !important;
+  }
+  
+  /* Custom prose styles for theme alignment */
+  .prose {
+    --tw-prose-body: hsl(var(--foreground));
+    --tw-prose-headings: hsl(var(--foreground));
+    --tw-prose-lead: hsl(var(--muted-foreground));
+    --tw-prose-links: hsl(var(--primary));
+    --tw-prose-bold: hsl(var(--foreground));
+    --tw-prose-counters: hsl(var(--muted-foreground));
+    --tw-prose-bullets: hsl(var(--muted-foreground));
+    --tw-prose-hr: hsl(var(--border));
+    --tw-prose-quotes: hsl(var(--foreground));
+    --tw-prose-quote-borders: hsl(var(--border));
+    --tw-prose-captions: hsl(var(--muted-foreground));
+    --tw-prose-code: hsl(var(--primary));
+    --tw-prose-pre-code: hsl(var(--foreground));
+    --tw-prose-pre-bg: transparent; /* Handled in MarkdownRenderer */
+    --tw-prose-th-borders: hsl(var(--border));
+    --tw-prose-td-borders: hsl(var(--border));
+  }
+  
+  .prose-invert {
+    --tw-prose-body: #FFFFFF;
+    --tw-prose-headings: #FFFFFF;
+    --tw-prose-lead: #FFFFFF;
+    --tw-prose-links: hsl(var(--accent));
+    --tw-prose-bold: #FFFFFF;
+    --tw-prose-counters: #FFFFFF;
+    --tw-prose-bullets: #FFFFFF;
+    --tw-prose-hr: hsl(var(--border));
+    --tw-prose-quotes: #FFFFFF;
+    --tw-prose-quote-borders: hsl(var(--border));
+    --tw-prose-captions: #FFFFFF;
+    --tw-prose-code: hsl(var(--accent));
+    --tw-prose-pre-code: #FFFFFF;
+    --tw-prose-pre-bg: transparent; /* Handled in MarkdownRenderer */
+  }
+
+  .prose a {
+    @apply no-underline transition-opacity hover:opacity-80;
+  }
+
+  .prose code:not(pre > code) {
+    @apply rounded bg-muted px-1.5 py-1 font-mono text-sm;
+  }
+
+  /* Custom scrollbar styles */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: hsl(var(--muted) / 0.3);
+    border-radius: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.5);
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.7);
+  }
+
+  /* Firefox scrollbar */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.5) hsl(var(--muted) / 0.3);
+  }
+}
+
+@layer components {
+  /* Chat Input Styles */
+  .chat-input-container {
+    @apply bg-[hsl(var(--chat-input-background)/0.5)] backdrop-blur-sm rounded-xl border border-border/50;
+  }
+
+  .chat-input-content {
+    @apply p-4;
+  }
+
+  .chat-input-attachments {
+    @apply mb-3 p-3 bg-[hsl(var(--chat-input-background)/0.3)] backdrop-blur-sm rounded-lg border border-border/30;
+  }
+
+  .chat-input-attachment-item {
+    @apply flex items-center gap-2 bg-[hsl(var(--chat-input-background)/0.7)] backdrop-blur-sm text-[hsl(var(--chat-input-foreground))] rounded-full pl-3 pr-1 py-1 text-sm border border-border/30;
+  }
+
+  .chat-input-main {
+    @apply flex items-end gap-3;
+  }
+
+  .chat-input-main.mobile {
+    @apply flex-col gap-3;
+  }
+
+  .chat-input-controls {
+    @apply flex flex-col gap-2;
+  }
+
+  .chat-input-main.mobile .chat-input-controls {
+    @apply flex-row justify-between;
+  }
+
+  .chat-input-select {
+    @apply w-[130px] bg-[hsl(var(--chat-input-background)/0.3)] backdrop-blur-sm border-border/30;
+  }
+
+  .chat-input-main.mobile .chat-input-select {
+    @apply w-auto flex-1;
+  }
+
+  .chat-input-buttons {
+    @apply flex items-center gap-1;
+  }
+
+  .chat-input-button {
+    @apply h-10 w-10;
+  }
+
+  .chat-input-button.recording {
+    @apply text-red-500 bg-red-500/10;
+  }
+
+  .chat-input-textarea-container {
+    @apply flex-1;
+  }
+
+  .chat-input-main.mobile .chat-input-textarea-container {
+    @apply w-full;
+  }
+
+  .chat-input-textarea {
+    @apply min-h-[60px] max-h-[150px] bg-[hsl(var(--chat-input-background)/0.8)] backdrop-blur-sm text-[hsl(var(--chat-input-foreground))] border-border/50 focus:ring-2 focus:ring-primary focus:border-primary resize-none custom-scrollbar;
+  }
+
+  .chat-input-textarea::placeholder {
+    @apply text-[hsl(var(--chat-input-placeholder-foreground))];
+  }
+
+  .chat-input-send-button {
+    @apply bg-primary hover:bg-primary/90 text-primary-foreground h-[60px] w-[60px] flex-shrink-0;
+  }
+
+  .chat-input-main.mobile .chat-input-send-button {
+    @apply w-full h-12;
+  }
+
+  /* Chat-specific select styling to use primary colors instead of accent */
+  .chat-select .select-trigger {
+    @apply focus:ring-primary focus:border-primary;
+  }
+
+  .chat-select-content {
+    @apply bg-popover border-primary/20;
+  }
+
+  .chat-select-content .select-item[data-state="checked"] {
+    @apply bg-primary text-primary-foreground;
+  }
+
+  .chat-select-content .select-item:focus {
+    @apply bg-primary/10 text-primary;
+  }
+}
