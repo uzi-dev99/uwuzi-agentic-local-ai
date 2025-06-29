@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageCircle, Trash2 } from 'lucide-react';
@@ -69,76 +68,81 @@ const ChatList: React.FC<ChatListProps> = ({
     return (
         <div
             ref={parentRef}
-            className="custom-scrollbar max-h-[calc(100vh-12rem)] overflow-y-auto relative" // Modified
+            className="custom-scrollbar max-h-[calc(100vh-12rem)] overflow-y-auto relative"
         >
             <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
-                {rowVirtualizer.getVirtualItems().map(virtualRow => {
-                    const chat = chats[virtualRow.index];
-                    return (
-                        <div
-                            key={chat.id}
-                            style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                width: '100%',
-                                height: `${virtualRow.size}px`,
-                                transform: `translateY(${virtualRow.start}px)`,
-                                padding: '0.5rem 0',
-                            }}
-                            className="px-1"
-                        >
-                            {/* Original chat item content starts here, wrapped in a single div for padding/margin */}
-                            <div className="bg-secondary/50 backdrop-blur-sm rounded-xl p-4 hover:bg-secondary/70 active:bg-secondary/80 transition-colors border border-border/50 group h-full flex flex-col justify-between">
-                                <div
-                                    className="cursor-pointer"
-                                    onClick={() => navigate(`/?view=chat&id=${chat.id}&folderId=${chat.folderId || ''}`)}
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <div className="flex-1">
-                                            <h3 className="font-semibold text-lg mb-1 truncate">{chat.title}</h3>
-                                            <p className="text-sm text-muted-foreground">
-                                                {chat.messages.length} mensajes • {new Date(chat.createdAt).toLocaleDateString()}
-                                            </p>
+                {/* Nuevo wrapper flex para centrar los items */}
+                <div className="flex flex-col items-center w-full absolute top-0 left-0" style={{ height: '100%' }}>
+                    {rowVirtualizer.getVirtualItems().map(virtualRow => {
+                        const chat = chats[virtualRow.index];
+                        return (
+                            <div
+                                key={chat.id}
+                                style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: `${virtualRow.size}px`,
+                                    transform: `translateY(${virtualRow.start}px)`,
+                                    padding: '0.5rem 0',
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                }}
+                                className="px-1"
+                            >
+                                {/* Limitar ancho y centrar el chat item */}
+                                <div className="bg-secondary/50 backdrop-blur-sm rounded-xl p-4 hover:bg-secondary/70 active:bg-secondary/80 transition-colors border border-border/50 group h-full flex flex-col justify-between w-full max-w-xl mx-auto">
+                                    <div
+                                        className="cursor-pointer"
+                                        onClick={() => navigate(`/?view=chat&id=${chat.id}&folderId=${chat.folderId || ''}`)}
+                                    >
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex-1">
+                                                <h3 className="font-semibold text-lg mb-1 truncate">{chat.title}</h3>
+                                                <p className="text-sm text-muted-foreground">
+                                                    {chat.messages.length} mensajes • {new Date(chat.createdAt).toLocaleDateString()}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="mt-2 flex justify-between items-end">
-                                    <div className="flex flex-wrap gap-1 items-center overflow-hidden" onClick={(e) => e.stopPropagation()}>
-                                        {(chat.tags && chat.tags.length > 0) ? (
-                                            chat.tags.slice(0, 3).map(tag => (
-                                                <Badge key={tag} variant="outline" className="cursor-pointer whitespace-nowrap" onClick={() => toggleTagFilter(tag)}>{tag}</Badge>
-                                            ))
-                                        ) : (
-                                            <p className="text-sm text-muted-foreground italic">Sin tags</p>
-                                        )}
-                                        {chat.tags && chat.tags.length > 3 && (
-                                           <Badge variant="outline">...</Badge>
-                                        )}
-                                    </div>
-
-                                    <div className="flex items-center flex-shrink-0">
-                                        <div onClick={(e) => e.stopPropagation()}>
-                                            <TagEditor
-                                                tags={chat.tags || []}
-                                                onUpdateTags={(newTags) => handleUpdateTags(chat.id, newTags)}
-                                            />
+                                    <div className="mt-0 flex justify-between items-end" style={{ marginTop: '-8px' }}>
+                                        <div className="flex flex-wrap gap-1 items-center overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                                            {(chat.tags && chat.tags.length > 0) ? (
+                                                chat.tags.slice(0, 3).map(tag => (
+                                                    <Badge key={tag} variant="outline" className="cursor-pointer whitespace-nowrap" onClick={() => toggleTagFilter(tag)}>{tag}</Badge>
+                                                ))
+                                            ) : (
+                                                <p className="text-sm text-muted-foreground italic">Sin tags</p>
+                                            )}
+                                            {chat.tags && chat.tags.length > 3 && (
+                                               <Badge variant="outline">...</Badge>
+                                            )}
                                         </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                            onClick={(e) => handleDeleteChat(chat.id, e)}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+
+                                        <div className="flex items-center flex-shrink-0">
+                                            <div onClick={(e) => e.stopPropagation()}>
+                                                <TagEditor
+                                                    tags={chat.tags || []}
+                                                    onUpdateTags={(newTags) => handleUpdateTags(chat.id, newTags)}
+                                                />
+                                            </div>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                onClick={(e) => handleDeleteChat(chat.id, e)}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div>
             </div>
         </div>
     );

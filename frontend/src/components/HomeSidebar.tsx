@@ -1,6 +1,5 @@
-
 import * as React from 'react';
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarMenuAction } from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarMenuAction, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Folder as FolderIcon, FolderPlus, MessageSquare, Trash2, LayoutDashboard } from 'lucide-react';
 import type { Folder } from '@/types/chat';
@@ -33,7 +32,8 @@ const HomeSidebar: React.FC<HomeSidebarProps> = ({ folders, selectedFolderId, on
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="p-4 text-center">
+        <div className="flex items-center p-4 text-center gap-2">
+          <SidebarTrigger className="lg:hidden mr-2 animate-in fade-in" />
           {appLogo ? (
             <img src={appLogo} alt="App Logo" className="h-10 w-auto mx-auto" />
           ) : (

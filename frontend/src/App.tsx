@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,8 +7,12 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./hooks/useAuth";
 import { NotificationProvider } from "./context/NotificationContext";
+import { StagewiseToolbar } from "@stagewise/toolbar-react";
+import { ReactPlugin } from "@stagewise-plugins/react";
 
 const queryClient = new QueryClient();
+
+const isDev = process.env.NODE_ENV === 'development';
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

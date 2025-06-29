@@ -132,9 +132,8 @@ const HomeView: React.FC<HomeViewProps> = ({ selectedFolderId, setSelectedFolder
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+      <div className="flex min-h-screen w-full overflow-x-hidden">
         <HomeSidebar
-          className="hidden lg:flex"
           folders={folders}
           selectedFolderId={selectedFolderId}
           onSelectFolder={setSelectedFolderId}
@@ -142,30 +141,27 @@ const HomeView: React.FC<HomeViewProps> = ({ selectedFolderId, setSelectedFolder
           onDeleteFolder={handleDeleteFolder}
           isLoading={isLoadingFolders}
         />
-        <main className="flex-1">
-          <div className="relative min-h-screen p-4 animate-fade-in">
-            <div className="max-w-4xl mx-auto">
-              <HomeHeader folderName={folderName} />
-              <ChatFilters
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                allTags={allTags}
-                selectedTags={selectedTags}
-                toggleTagFilter={toggleTagFilter}
-                clearTagFilters={() => setSelectedTags([])}
-              />
-              <ChatList
-                isLoading={isLoadingChats}
-                chats={filteredChats}
-                selectedFolderId={selectedFolderId}
-                handleDeleteChat={handleDeleteChat}
-                handleUpdateTags={handleUpdateTags}
-                toggleTagFilter={toggleTagFilter}
-              />
-            </div>
-            
-            <NewChatButton onClick={handleNewChat} />
+        <main className="flex-1 flex flex-col items-center">
+          <div className="relative min-h-screen p-4 animate-fade-in w-full max-w-4xl">
+            <HomeHeader folderName={folderName} />
+            <ChatFilters
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              allTags={allTags}
+              selectedTags={selectedTags}
+              toggleTagFilter={toggleTagFilter}
+              clearTagFilters={() => setSelectedTags([])}
+            />
+            <ChatList
+              isLoading={isLoadingChats}
+              chats={filteredChats}
+              selectedFolderId={selectedFolderId}
+              handleDeleteChat={handleDeleteChat}
+              handleUpdateTags={handleUpdateTags}
+              toggleTagFilter={toggleTagFilter}
+            />
           </div>
+          <NewChatButton onClick={handleNewChat} />
         </main>
       </div>
     </SidebarProvider>
