@@ -38,7 +38,7 @@ const ChatView = () => {
       />
 
       <footer className="flex-shrink-0 sticky bottom-0 p-3 md:p-4 bg-secondary/50 backdrop-blur-sm border-t border-border/50 z-10">
-        <div className="max-w-4xl mx-auto w-full">
+        <div className="w-full">
           <ChatInput 
             onSendMessage={handleSendMessage} 
             isSending={isSending}

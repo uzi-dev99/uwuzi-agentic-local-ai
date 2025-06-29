@@ -38,7 +38,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ chatId, chatTitle, onSaveTitle 
             </Button>
             <div className="ml-2 md:ml-4 flex-1">
                 {isEditingTitle ? (
-                    <div className="flex items-center gap-2 max-w-sm">
+                    <div className="flex items-center gap-2 w-full">
                         <Input
                             value={tempTitle}
                             onChange={(e) => setTempTitle(e.target.value)}

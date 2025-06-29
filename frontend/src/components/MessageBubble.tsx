@@ -82,7 +82,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 
   return (
     <div className={cn(
-      "flex items-start gap-3 w-full max-w-[80%] my-3 animate-fade-in",
+      // Cambia max-w-[80%] por max-w-full en mobile, y limita solo en md+
+      "flex items-start gap-3 w-full max-w-full md:max-w-[80%] my-3 animate-fade-in",
       isUser ? "ml-auto flex-row-reverse" : "mr-auto flex-row"
     )}>
       <Avatar className="flex-shrink-0 w-8 h-8">
@@ -94,19 +95,23 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
           {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
         </AvatarFallback>
       </Avatar>
-      
       <div className={cn(
-        "rounded-xl p-4 group shadow-sm border",
+        // Quita overflow-hidden y usa max-w-full en mobile, max-w-[80%] solo en md+
+        "rounded-xl p-4 group shadow-sm border max-w-full md:max-w-[80%] break-words whitespace-pre-wrap",
         isUser 
           ? "bg-primary text-primary-foreground rounded-br-none border-primary/20"
           : "bg-secondary text-secondary-foreground rounded-bl-none border-secondary/20"
       )}>
-        <div style={{ 
-          color: isUser 
-            ? 'hsl(var(--primary-foreground)) !important' 
-            : (resolvedTheme === 'dark' ? '#ffffff !important' : '#000000 !important')
-        }}>
-          <MarkdownRenderer content={message.text} theme={resolvedTheme} />
+        <div
+          style={{ 
+            color: isUser 
+              ? 'hsl(var(--primary-foreground)) !important' 
+              : (resolvedTheme === 'dark' ? '#ffffff !important' : '#000000 !important')
+          }}
+          className="break-words whitespace-pre-wrap w-full"
+        >
+          {/* MarkdownRenderer ya tiene break-words, pero si hay otros elementos de texto, asegúrate de que tengan break-words */}
+          <MarkdownRenderer content={message.text} />
         </div>
         
         {message.attachments && message.attachments.length > 0 && (

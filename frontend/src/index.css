@@ -282,3 +282,7 @@
     @apply bg-primary/10 text-primary;
   }
 }
+
+* {
+  outline: 1px solid red;
+}
