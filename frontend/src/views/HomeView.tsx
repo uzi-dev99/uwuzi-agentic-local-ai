@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Chat } from '@/types/chat';
-import { SidebarProvider } from '@/components/ui/sidebar';
 import HomeSidebar from '@/components/HomeSidebar';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -131,40 +130,38 @@ const HomeView: React.FC<HomeViewProps> = ({ selectedFolderId, setSelectedFolder
   });
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full overflow-x-hidden">
-        <HomeSidebar
-          folders={folders}
-          selectedFolderId={selectedFolderId}
-          onSelectFolder={setSelectedFolderId}
-          onNewFolder={handleNewFolder}
-          onDeleteFolder={handleDeleteFolder}
-          isLoading={isLoadingFolders}
-        />
-        <main className="flex-1 flex flex-col items-center">
-          <div className="relative min-h-screen p-4 animate-fade-in w-full max-w-4xl">
-            <HomeHeader folderName={folderName} />
-            <ChatFilters
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              allTags={allTags}
-              selectedTags={selectedTags}
-              toggleTagFilter={toggleTagFilter}
-              clearTagFilters={() => setSelectedTags([])}
-            />
-            <ChatList
-              isLoading={isLoadingChats}
-              chats={filteredChats}
-              selectedFolderId={selectedFolderId}
-              handleDeleteChat={handleDeleteChat}
-              handleUpdateTags={handleUpdateTags}
-              toggleTagFilter={toggleTagFilter}
-            />
-          </div>
-          <NewChatButton onClick={handleNewChat} />
-        </main>
-      </div>
-    </SidebarProvider>
+    <>
+      <HomeSidebar
+        folders={folders}
+        selectedFolderId={selectedFolderId}
+        onSelectFolder={setSelectedFolderId}
+        onNewFolder={handleNewFolder}
+        onDeleteFolder={handleDeleteFolder}
+        isLoading={isLoadingFolders}
+      />
+      <main className="flex flex-col items-center transition-all duration-300 md:ml-64">
+        <div className="relative min-h-screen p-4 animate-fade-in w-full max-w-4xl">
+          <HomeHeader folderName={folderName} />
+          <ChatFilters
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            allTags={allTags}
+            selectedTags={selectedTags}
+            toggleTagFilter={toggleTagFilter}
+            clearTagFilters={() => setSelectedTags([])}
+          />
+          <ChatList
+            isLoading={isLoadingChats}
+            chats={filteredChats}
+            selectedFolderId={selectedFolderId}
+            handleDeleteChat={handleDeleteChat}
+            handleUpdateTags={handleUpdateTags}
+            toggleTagFilter={toggleTagFilter}
+          />
+        </div>
+        <NewChatButton onClick={handleNewChat} />
+      </main>
+    </>
   );
 };
 

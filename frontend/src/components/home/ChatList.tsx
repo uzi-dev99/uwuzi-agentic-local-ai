@@ -68,7 +68,7 @@ const ChatList: React.FC<ChatListProps> = ({
     return (
         <div
             ref={parentRef}
-            className="custom-scrollbar max-h-[calc(100vh-12rem)] overflow-y-auto relative"
+            className="custom-scrollbar max-h-[calc(100vh-12rem)] overflow-y-auto relative w-full mx-auto px-4"
         >
             <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
                 {/* Nuevo wrapper flex para centrar los items */}
@@ -89,7 +89,7 @@ const ChatList: React.FC<ChatListProps> = ({
                                     display: 'flex',
                                     justifyContent: 'center',
                                 }}
-                                className="px-1"
+                                className="w-full"
                             >
                                 {/* Limitar ancho y centrar el chat item */}
                                 <div className="bg-secondary/50 backdrop-blur-sm rounded-xl p-4 hover:bg-secondary/70 active:bg-secondary/80 transition-colors border border-border/50 group h-full flex flex-col justify-between w-full max-w-xl mx-auto">

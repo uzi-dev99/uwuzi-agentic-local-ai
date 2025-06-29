@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -21,14 +20,15 @@ const ChatFilters: React.FC<ChatFiltersProps> = ({
     clearTagFilters,
 }) => {
     return (
-        <div className="mb-6 space-y-4">
+        <div className="mb-6 space-y-4 w-full px-4 max-w-full overflow-x-hidden">
             <Input 
                 placeholder="Buscar por título o tag..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
+                className="w-full max-w-full min-w-0"
             />
             {allTags.length > 0 && (
-                <div className="flex flex-wrap gap-2 items-center">
+                <div className="flex flex-wrap gap-2 items-center w-full max-w-full overflow-x-auto">
                     <span className="text-sm font-medium self-center text-muted-foreground">Filtrar:</span>
                     {allTags.map(tag => (
                         <Button
