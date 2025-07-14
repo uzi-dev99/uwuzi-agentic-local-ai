@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./hooks/useAuth";
 import { NotificationProvider } from "./context/NotificationContext";
 import { SidebarProvider } from '@/components/ui/sidebar';
+import MobileSidebarCloser from './components/ui/MobileSidebarCloser';
 
 const queryClient = new QueryClient();
 
@@ -21,12 +22,18 @@ const App = () => (
       <AuthProvider>
         <NotificationProvider>
           <SidebarProvider>
-            <BrowserRouter>
+            <BrowserRouter
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true,
+              }}
+            >
               <Routes>
                 <Route path="/" element={<Index />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <MobileSidebarCloser />
             </BrowserRouter>
           </SidebarProvider>
         </NotificationProvider>

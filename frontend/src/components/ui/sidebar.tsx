@@ -9,12 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, } from "@/components/ui/tooltip"
+import MobileSidebarCloser from './MobileSidebarCloser';
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -81,6 +77,7 @@ const SidebarProvider = React.forwardRef<
       };
     }, []);
     const [openMobile, setOpenMobile] = React.useState(false)
+
 
     // This is the internal state of the sidebar.
     // We use openProp and setOpenProp for control from outside the component.
@@ -187,7 +184,25 @@ const Sidebar = React.forwardRef<
     },
     ref
   ) => {
-    const { isMobile: isMobileLayout, state, openMobile, setOpenMobile } = useSidebar()
+    const { isMobileLayout, state, openMobile, setOpenMobile } = useSidebar()
+
+    if (isMobileLayout) {
+      return (
+        <Sheet open={openMobile} onOpenChange={setOpenMobile}>
+          <SheetContent
+            side={side}
+            className={cn(
+              "flex h-full w-[--sidebar-width-mobile] flex-col bg-sidebar p-0 text-sidebar-foreground shadow-none",
+              className
+            )}
+            ref={ref}
+            {...props}
+          >
+            {children}
+          </SheetContent>
+        </Sheet>
+      )
+    }
 
     if (collapsible === "none") {
       return (
@@ -566,7 +581,7 @@ const SidebarMenuButton = React.forwardRef<
     ref
   ) => {
     const Comp = asChild ? Slot : "button"
-    const { isMobile: isMobileLayout, state } = useSidebar()
+    const { isMobileLayout, state } = useSidebar()
 
     const button = (
       <Comp

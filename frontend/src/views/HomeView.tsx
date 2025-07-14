@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Chat } from '@/types/chat';
 import HomeSidebar from '@/components/HomeSidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as api from '@/lib/api';
@@ -130,7 +131,7 @@ const HomeView: React.FC<HomeViewProps> = ({ selectedFolderId, setSelectedFolder
   });
 
   return (
-    <>
+    <SidebarProvider>
       <HomeSidebar
         folders={folders}
         selectedFolderId={selectedFolderId}
@@ -161,7 +162,7 @@ const HomeView: React.FC<HomeViewProps> = ({ selectedFolderId, setSelectedFolder
         </div>
         <NewChatButton onClick={handleNewChat} />
       </main>
-    </>
+    </SidebarProvider>
   );
 };
 
