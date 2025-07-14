@@ -82,10 +82,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 
   return (
     <div className={cn(
-      "flex items-start gap-3 w-full max-w-[80%] my-3 animate-fade-in",
+      "flex items-start gap-2 sm:gap-3 w-full max-w-[95%] xs:max-w-[90%] sm:max-w-[85%] md:max-w-[80%] lg:max-w-[75%] my-2 sm:my-3 animate-fade-in",
       isUser ? "ml-auto flex-row-reverse" : "mr-auto flex-row"
     )}>
-      <Avatar className="flex-shrink-0 w-8 h-8">
+      <Avatar className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8">
         <AvatarImage src={isUser ? currentUser?.avatar : ""} />
         <AvatarFallback className={cn(
           "text-xs",
@@ -96,12 +96,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
       </Avatar>
       
       <div className={cn(
-        "rounded-xl p-4 group shadow-sm border",
+        "rounded-xl p-3 sm:p-4 group shadow-sm border min-w-0 flex-1 max-w-full message-bubble-content",
         isUser 
           ? "bg-primary text-primary-foreground rounded-br-none border-primary/20"
           : "bg-secondary text-secondary-foreground rounded-bl-none border-secondary/20"
       )}>
-        <div style={{ 
+        <div className="message-text" style={{ 
           color: isUser 
             ? 'hsl(var(--primary-foreground)) !important' 
             : (resolvedTheme === 'dark' ? '#ffffff !important' : '#000000 !important')
@@ -110,7 +110,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         </div>
         
         {message.attachments && message.attachments.length > 0 && (
-          <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="mt-2 sm:mt-3 grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-2">
             {message.attachments.map((attachment, index) => {
               // Si es imagen en base64 (nuevo flujo)
               if (
@@ -186,7 +186,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
           </div>
         )}
         
-        <div className="flex justify-between items-center mt-3 pt-2 border-t border-border/20">
+        <div className="flex justify-between items-center mt-2 sm:mt-3 pt-2 border-t border-border/20">
           <p className="text-xs opacity-70 font-medium">{message.timestamp}</p>
           {!isUser && (
             <Button

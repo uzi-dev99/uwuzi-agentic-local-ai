@@ -157,7 +157,34 @@
   }
 
   .prose code:not(pre > code) {
-    @apply rounded bg-muted px-1.5 py-1 font-mono text-sm;
+    @apply rounded bg-muted px-1.5 py-1 font-mono text-sm break-words;
+  }
+
+  /* Mobile markdown improvements */
+  @media (max-width: 640px) {
+    .prose {
+      @apply text-sm leading-relaxed;
+    }
+    
+    .prose pre {
+      @apply text-xs overflow-x-auto;
+    }
+    
+    .prose table {
+      @apply text-xs;
+    }
+    
+    .prose h1 {
+      @apply text-xl;
+    }
+    
+    .prose h2 {
+      @apply text-lg;
+    }
+    
+    .prose h3 {
+      @apply text-base;
+    }
   }
 
   /* Custom scrollbar styles */
@@ -188,6 +215,21 @@
 }
 
 @layer components {
+  /* Mobile-first responsive improvements */
+  @media (max-width: 480px) {
+    .chat-input-container {
+      @apply rounded-lg;
+    }
+    
+    .chat-input-textarea {
+      @apply min-h-[50px] text-sm;
+    }
+    
+    .chat-input-send-button {
+      @apply h-[50px];
+    }
+  }
+
   /* Chat Input Styles */
   .chat-input-container {
     @apply bg-[hsl(var(--chat-input-background)/0.5)] backdrop-blur-sm rounded-xl border border-border/50;
@@ -280,5 +322,52 @@
 
   .chat-select-content .select-item:focus {
     @apply bg-primary/10 text-primary;
+  }
+
+  /* Mobile overflow fixes */
+  .message-bubble-content {
+    @apply overflow-x-auto overflow-y-hidden;
+  }
+
+  .message-bubble-content::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .message-bubble-content::-webkit-scrollbar-track {
+    background: hsl(var(--muted) / 0.2);
+    border-radius: 3px;
+  }
+
+  .message-bubble-content::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.4);
+    border-radius: 3px;
+  }
+
+  .message-bubble-content::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.6);
+  }
+
+  /* Word breaking for long text */
+  .message-text {
+    @apply break-words hyphens-auto;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* Code block mobile improvements */
+  @media (max-width: 640px) {
+    .message-bubble-content pre {
+      @apply text-xs;
+      max-width: calc(100vw - 120px);
+    }
+    
+    .message-bubble-content table {
+      @apply text-xs;
+      min-width: 300px;
+    }
+    
+    .message-bubble-content code:not(pre code) {
+      @apply text-xs break-all;
+    }
   }
 }

@@ -23,7 +23,7 @@ const ChatView = () => {
   } = useChat(chatId, folderId);
 
   return (
-    <div className="flex flex-col h-screen chat-view-background">
+    <div className="flex flex-col h-screen overflow-hidden chat-view-background">
       <ChatHeader
         chatId={chatId}
         chatTitle={chatTitle}
@@ -37,8 +37,8 @@ const ChatView = () => {
         onCancelProcess={handleCancelProcess}
       />
 
-      <footer className="flex-shrink-0 sticky bottom-0 p-3 md:p-4 bg-secondary/50 backdrop-blur-sm border-t border-border/50 z-10">
-        <div className="max-w-4xl mx-auto w-full">
+      <footer className="flex-shrink-0 sticky bottom-0 p-2 sm:p-3 md:p-4 bg-secondary/50 backdrop-blur-sm border-t border-border/50 z-10">
+        <div className="max-w-4xl mx-auto w-full min-w-0 px-1 sm:px-0">
           <ChatInput 
             onSendMessage={handleSendMessage} 
             isSending={isSending}

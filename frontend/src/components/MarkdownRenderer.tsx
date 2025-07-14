@@ -2,93 +2,154 @@
 import * as React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { dark, prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import remarkGfm from 'remark-gfm';
 import { cn } from '@/lib/utils';
+import { Copy, Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface MarkdownRendererProps {
   content: string;
   theme: string | undefined;
 }
 
+const CodeBlock: React.FC<{ children: string; language: string; isDark: boolean }> = ({ children, language, isDark }) => {
+  const [isCopied, setIsCopied] = React.useState(false);
+
+  const handleCopy = async () => {
+    if (isCopied) return;
+    try {
+      await navigator.clipboard.writeText(children);
+      toast.success('Código copiado al portapapeles');
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      toast.error('No se pudo copiar el código');
+      console.error('Failed to copy code: ', err);
+    }
+  };
+
+  return (
+    <div className="relative group my-4">
+      <div className="overflow-x-auto">
+        <SyntaxHighlighter
+          style={isDark ? dark : prism}
+          language={language}
+          PreTag="pre"
+          className="!bg-transparent !p-4 !m-0 text-sm rounded-lg border"
+          customStyle={{
+            backgroundColor: isDark ? 'rgb(30, 30, 30)' : 'rgb(248, 250, 252)',
+            border: `1px solid ${isDark ? 'rgb(55, 65, 81)' : 'rgb(229, 231, 235)'}`,
+            borderRadius: '0.5rem',
+            margin: 0,
+            padding: '1rem'
+          }}
+        >
+          {children}
+        </SyntaxHighlighter>
+      </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-background/80 hover:bg-background"
+        onClick={handleCopy}
+        aria-label="Copiar código"
+      >
+        {isCopied ? (
+          <Check className="h-4 w-4 text-green-500" />
+        ) : (
+          <Copy className="h-4 w-4" />
+        )}
+      </Button>
+    </div>
+  );
+};
+
 const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) => {
   const isDark = theme === 'dark';
 
-  // Tema personalizado para syntax highlighting con colores garantizados
-  const syntaxTheme = isDark ? {
-    'pre[class*="language-"]': {
-      backgroundColor: '#1a1a1a !important',
-      color: '#e5e5e5 !important',
-      borderRadius: '0.5rem',
-      padding: '1rem',
-      overflowX: 'auto',
-      border: '1px solid hsl(var(--border))',
-    },
-    'code[class*="language-"]': {
-      backgroundColor: 'transparent !important',
-      color: '#e5e5e5 !important',
-    },
-    'token.comment': { color: '#7c7c7c !important' },
-    'token.punctuation': { color: '#e5e5e5 !important' },
-    'token.property': { color: '#79c0ff !important' },
-    'token.selector': { color: '#7ee787 !important' },
-    'token.operator': { color: '#ff7b72 !important' },
-    'token.keyword': { color: '#ff7b72 !important' },
-    'token.function': { color: '#d2a8ff !important' },
-    'token.variable': { color: '#79c0ff !important' },
-    'token.string': { color: '#a5d6ff !important' },
-    'token.number': { color: '#79c0ff !important' },
-    'token.boolean': { color: '#79c0ff !important' },
-  } : {
-    'pre[class*="language-"]': {
-      backgroundColor: '#f6f8fa !important',
-      color: '#24292f !important',
-      borderRadius: '0.5rem',
-      padding: '1rem',
-      overflowX: 'auto',
-      border: '1px solid hsl(var(--border))',
-    },
-    'code[class*="language-"]': {
-      backgroundColor: 'transparent !important',
-      color: '#24292f !important',
-    },
-    'token.comment': { color: '#6a737d !important' },
-    'token.punctuation': { color: '#24292f !important' },
-    'token.property': { color: '#005cc5 !important' },
-    'token.selector': { color: '#22863a !important' },
-    'token.operator': { color: '#d73a49 !important' },
-    'token.keyword': { color: '#d73a49 !important' },
-    'token.function': { color: '#6f42c1 !important' },
-    'token.variable': { color: '#005cc5 !important' },
-    'token.string': { color: '#032f62 !important' },
-    'token.number': { color: '#005cc5 !important' },
-    'token.boolean': { color: '#005cc5 !important' },
-  };
+
 
   const markdownComponents = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     code({ node, inline, className, children, ...props }: any) {
       const match = /language-(\w+)/.exec(className || '');
       return !inline && match ? (
-        <div className="my-4">
-          <SyntaxHighlighter
-            style={syntaxTheme}
-            language={match[1]}
-            PreTag="div"
-            className="text-sm"
-            {...props}
-          >
-            {String(children).replace(/\n$/, '')}
-          </SyntaxHighlighter>
-        </div>
+        <CodeBlock 
+          language={match[1]} 
+          isDark={isDark}
+        >
+          {String(children).replace(/\n$/, '')}
+        </CodeBlock>
       ) : (
         <code 
           className={cn(
-            'rounded px-2 py-1 text-sm font-mono',
+            'rounded px-1.5 py-0.5 text-sm font-mono break-all',
             isDark ? 'bg-gray-800 text-gray-100' : 'bg-gray-100 text-gray-800'
           )}
           {...props}
         >
           {children}
         </code>
+      );
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    table({ children, ...props }: any) {
+      return (
+        <div className="overflow-x-auto my-4">
+          <table 
+            className={cn(
+              'min-w-full border-collapse border rounded-lg',
+              'xs:min-w-[300px] sm:min-w-full',
+              isDark ? 'border-gray-700' : 'border-gray-300'
+            )}
+            {...props}
+          >
+            {children}
+          </table>
+        </div>
+      );
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    thead({ children, ...props }: any) {
+      return (
+        <thead 
+          className={cn(
+            isDark ? 'bg-gray-800' : 'bg-gray-50'
+          )}
+          {...props}
+        >
+          {children}
+        </thead>
+      );
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    th({ children, ...props }: any) {
+      return (
+        <th 
+          className={cn(
+            'border px-4 py-2 text-left font-semibold',
+            isDark ? 'border-gray-700 text-gray-100' : 'border-gray-300 text-gray-900'
+          )}
+          {...props}
+        >
+          {children}
+        </th>
+      );
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    td({ children, ...props }: any) {
+      return (
+        <td 
+          className={cn(
+            'border px-4 py-2',
+            isDark ? 'border-gray-700 text-gray-100' : 'border-gray-300 text-gray-900'
+          )}
+          {...props}
+        >
+          {children}
+        </td>
       );
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -216,15 +277,21 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
   };
 
   return (
-    <div
-      className="max-w-none break-words"
-      style={{ 
-        color: isDark ? '#ffffff !important' : '#000000 !important',
-        fontSize: '0.875rem',
-        lineHeight: '1.6'
-      }}
-    >
-      <ReactMarkdown components={markdownComponents}>{content}</ReactMarkdown>
+    <div className={cn(
+      "prose max-w-none break-words",
+      isDark ? "prose-invert" : "",
+      "prose-sm prose-gray",
+      "prose-headings:font-semibold",
+      "prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline",
+      "prose-code:text-sm prose-code:font-mono",
+      "prose-pre:p-0 prose-pre:bg-transparent"
+    )}>
+      <ReactMarkdown 
+        components={markdownComponents}
+        remarkPlugins={[remarkGfm]}
+      >
+        {content}
+      </ReactMarkdown>
     </div>
   );
 };

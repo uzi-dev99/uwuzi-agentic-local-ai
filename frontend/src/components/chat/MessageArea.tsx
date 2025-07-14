@@ -24,8 +24,8 @@ const MessageArea: React.FC<MessageAreaProps> = ({ messages, isTyping, isWaiting
     }, [messages, isTyping, isWaitingLongResponse]);
     
     return (
-        <main className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-            <div className="max-w-4xl mx-auto w-full">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-2 sm:p-3 md:p-4 custom-scrollbar">
+            <div className="max-w-4xl mx-auto w-full min-w-0 px-1 sm:px-0">
                 {messages.map(msg => (
                     <MessageBubble key={msg.id} message={msg} />
                 ))}
