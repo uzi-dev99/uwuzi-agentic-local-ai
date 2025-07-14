@@ -2,7 +2,7 @@
 import * as React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { dark, prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { materialDark, prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import remarkGfm from 'remark-gfm';
 import { cn } from '@/lib/utils';
 import { Copy, Check } from 'lucide-react';
@@ -34,7 +34,7 @@ const CodeBlock: React.FC<{ children: string; language: string; isDark: boolean 
     <div className="relative group my-4">
       <div className="overflow-x-auto">
         <SyntaxHighlighter
-          style={isDark ? dark : prism}
+          style={isDark ? materialDark : prism}
           language={language}
           PreTag="pre"
           className="!bg-transparent !p-4 !m-0 text-sm rounded-lg border"
@@ -86,7 +86,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
         <code 
           className={cn(
             'rounded px-1.5 py-0.5 text-sm font-mono break-all',
-            isDark ? 'bg-gray-800 text-gray-100' : 'bg-gray-100 text-gray-800'
+            isDark ? 'bg-gray-800 text-gray-50' : 'bg-gray-200 text-gray-900'
           )}
           {...props}
         >
@@ -102,7 +102,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
             className={cn(
               'min-w-full border-collapse border rounded-lg',
               'xs:min-w-[300px] sm:min-w-full',
-              isDark ? 'border-gray-700' : 'border-gray-300'
+              isDark ? 'border-gray-600' : 'border-gray-400'
             )}
             {...props}
           >
@@ -116,7 +116,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
       return (
         <thead 
           className={cn(
-            isDark ? 'bg-gray-800' : 'bg-gray-50'
+            isDark ? 'bg-gray-700' : 'bg-gray-100'
           )}
           {...props}
         >
@@ -130,7 +130,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
         <th 
           className={cn(
             'border px-4 py-2 text-left font-semibold',
-            isDark ? 'border-gray-700 text-gray-100' : 'border-gray-300 text-gray-900'
+            isDark ? 'border-gray-600 text-gray-50' : 'border-gray-400 text-gray-900'
           )}
           {...props}
         >
@@ -144,7 +144,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
         <td 
           className={cn(
             'border px-4 py-2',
-            isDark ? 'border-gray-700 text-gray-100' : 'border-gray-300 text-gray-900'
+            isDark ? 'border-gray-600 text-gray-50' : 'border-gray-400 text-gray-900'
           )}
           {...props}
         >

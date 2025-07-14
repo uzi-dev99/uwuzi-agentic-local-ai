@@ -187,12 +187,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         )}
         
         <div className="flex justify-between items-center mt-2 sm:mt-3 pt-2 border-t border-border/20">
-          <p className="text-xs opacity-70 font-medium">{message.timestamp}</p>
+          <p className="text-xs font-medium message-timestamp">{message.timestamp}</p>
           {!isUser && (
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+              className="h-7 w-7 text-muted-foreground opacity-0 group-hover:opacity-90 transition-opacity duration-200 copy-button"
               onClick={handleCopy}
               aria-label="Copiar markdown"
             >
