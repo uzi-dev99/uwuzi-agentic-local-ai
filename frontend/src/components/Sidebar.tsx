@@ -18,7 +18,7 @@ const Sidebar: React.FC = () => {
         aria-hidden={!isOpen}
       >
         <button
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-900"
+          className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
           onClick={closeSidebar}
         >
           ✕

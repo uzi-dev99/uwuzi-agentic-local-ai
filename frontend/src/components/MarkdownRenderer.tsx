@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 interface MarkdownRendererProps {
   content: string;
   theme: string | undefined;
+  isUser?: boolean;
 }
 
 const CodeBlock: React.FC<{ children: string; language: string; isDark: boolean }> = ({ children, language, isDark }) => {
@@ -66,8 +67,23 @@ const CodeBlock: React.FC<{ children: string; language: string; isDark: boolean 
   );
 };
 
-const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) => {
+const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme, isUser = false }) => {
   const isDark = theme === 'dark';
+  
+  // Para mensajes del usuario, usar colores que contrasten con el fondo primary
+  const getTextColor = () => {
+    if (isUser) {
+      return "text-primary-foreground";
+    }
+    return isDark ? "text-white" : "text-black";
+  };
+  
+  const getLinkColor = () => {
+    if (isUser) {
+      return "text-primary-foreground/80 hover:text-primary-foreground";
+    }
+    return isDark ? "text-blue-400" : "text-blue-600";
+  };
 
 
 
@@ -86,7 +102,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
         <code 
           className={cn(
             'rounded px-1.5 py-0.5 text-sm font-mono break-all',
-            isDark ? 'bg-gray-800 text-gray-50' : 'bg-gray-200 text-gray-900'
+            isDark ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-900'
           )}
           {...props}
         >
@@ -130,7 +146,8 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
         <th 
           className={cn(
             'border px-4 py-2 text-left font-semibold',
-            isDark ? 'border-gray-600 text-gray-50' : 'border-gray-400 text-gray-900'
+            isDark ? 'border-gray-600' : 'border-gray-400',
+            getTextColor()
           )}
           {...props}
         >
@@ -144,7 +161,8 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
         <td 
           className={cn(
             'border px-4 py-2',
-            isDark ? 'border-gray-600 text-gray-50' : 'border-gray-400 text-gray-900'
+            isDark ? 'border-gray-600' : 'border-gray-400',
+            getTextColor()
           )}
           {...props}
         >
@@ -156,8 +174,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
     p({ children, ...props }: any) {
       return (
         <p 
-          className="mb-4 last:mb-0"
-          style={{ color: isDark ? '#ffffff !important' : '#000000 !important' }}
+          className={cn(
+            "mb-4 last:mb-0",
+            getTextColor()
+          )}
           {...props}
         >
           {children}
@@ -168,8 +188,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
     h1({ children, ...props }: any) {
       return (
         <h1 
-          className="text-2xl font-bold mb-4"
-          style={{ color: isDark ? '#ffffff !important' : '#000000 !important' }}
+          className={cn(
+            "text-2xl font-bold mb-4",
+            getTextColor()
+          )}
           {...props}
         >
           {children}
@@ -180,8 +202,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
     h2({ children, ...props }: any) {
       return (
         <h2 
-          className="text-xl font-bold mb-3"
-          style={{ color: isDark ? '#ffffff !important' : '#000000 !important' }}
+          className={cn(
+            "text-xl font-bold mb-3",
+            getTextColor()
+          )}
           {...props}
         >
           {children}
@@ -192,8 +216,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
     h3({ children, ...props }: any) {
       return (
         <h3 
-          className="text-lg font-bold mb-2"
-          style={{ color: isDark ? '#ffffff !important' : '#000000 !important' }}
+          className={cn(
+            "text-lg font-bold mb-2",
+            getTextColor()
+          )}
           {...props}
         >
           {children}
@@ -204,8 +230,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
     ul({ children, ...props }: any) {
       return (
         <ul 
-          className="list-disc list-inside mb-4 space-y-1"
-          style={{ color: isDark ? '#ffffff !important' : '#000000 !important' }}
+          className={cn(
+            "list-disc list-inside mb-4 space-y-1",
+            getTextColor()
+          )}
           {...props}
         >
           {children}
@@ -216,8 +244,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
     ol({ children, ...props }: any) {
       return (
         <ol 
-          className="list-decimal list-inside mb-4 space-y-1"
-          style={{ color: isDark ? '#ffffff !important' : '#000000 !important' }}
+          className={cn(
+            "list-decimal list-inside mb-4 space-y-1",
+            getTextColor()
+          )}
           {...props}
         >
           {children}
@@ -228,7 +258,9 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
     li({ children, ...props }: any) {
       return (
         <li 
-          style={{ color: isDark ? '#ffffff !important' : '#000000 !important' }}
+          className={cn(
+            getTextColor()
+          )}
           {...props}
         >
           {children}
@@ -239,8 +271,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
     strong({ children, ...props }: any) {
       return (
         <strong 
-          className="font-bold"
-          style={{ color: isDark ? '#ffffff !important' : '#000000 !important' }}
+          className={cn(
+            "font-bold",
+            getTextColor()
+          )}
           {...props}
         >
           {children}
@@ -251,8 +285,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
     em({ children, ...props }: any) {
       return (
         <em 
-          className="italic"
-          style={{ color: isDark ? '#ffffff !important' : '#000000 !important' }}
+          className={cn(
+            "italic",
+            getTextColor()
+          )}
           {...props}
         >
           {children}
@@ -264,8 +300,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
       return (
         <a 
           href={href}
-          className="underline hover:no-underline transition-all duration-200"
-          style={{ color: isDark ? '#60a5fa !important' : '#2563eb !important' }}
+          className={cn(
+            "underline hover:no-underline transition-all duration-200",
+            getLinkColor()
+          )}
           target="_blank"
           rel="noopener noreferrer"
           {...props}
@@ -280,9 +318,9 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
     <div className={cn(
       "prose max-w-none break-words",
       isDark ? "prose-invert" : "",
-      "prose-sm prose-gray",
+      "prose-sm",
       "prose-headings:font-semibold",
-      "prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline",
+      isDark ? "prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline" : "prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline",
       "prose-code:text-sm prose-code:font-mono",
       "prose-pre:p-0 prose-pre:bg-transparent"
     )}>

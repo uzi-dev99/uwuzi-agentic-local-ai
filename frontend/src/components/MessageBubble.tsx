@@ -99,14 +99,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         "rounded-xl p-3 sm:p-4 group shadow-sm border min-w-0 flex-1 max-w-full message-bubble-content",
         isUser 
           ? "bg-primary text-primary-foreground rounded-br-none border-primary/20"
-          : "bg-secondary text-secondary-foreground rounded-bl-none border-secondary/20"
+          : "bg-secondary rounded-bl-none border-secondary/20"
       )}>
-        <div className="message-text" style={{ 
-          color: isUser 
-            ? 'hsl(var(--primary-foreground)) !important' 
-            : (resolvedTheme === 'dark' ? '#ffffff !important' : '#000000 !important')
-        }}>
-          <MarkdownRenderer content={message.text} theme={resolvedTheme} />
+        <div className="message-text">
+          <MarkdownRenderer content={message.text} theme={resolvedTheme} isUser={isUser} />
         </div>
         
         {message.attachments && message.attachments.length > 0 && (

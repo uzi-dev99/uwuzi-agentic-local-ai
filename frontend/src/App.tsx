@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./hooks/useAuth";
@@ -16,12 +17,18 @@ const isDev = process.env.NODE_ENV === 'development';
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <AuthProvider>
-        <NotificationProvider>
-          <SidebarProvider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <AuthProvider>
+          <NotificationProvider>
+            <SidebarProvider>
             <BrowserRouter
               future={{
                 v7_startTransition: true,
@@ -35,10 +42,11 @@ const App = () => (
               </Routes>
               <MobileSidebarCloser />
             </BrowserRouter>
-          </SidebarProvider>
-        </NotificationProvider>
-      </AuthProvider>
-    </TooltipProvider>
+            </SidebarProvider>
+          </NotificationProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
