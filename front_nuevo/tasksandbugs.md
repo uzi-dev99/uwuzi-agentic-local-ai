@@ -1,3 +1,5 @@
+### FASE 1
+
 1. Al llamarse todos los chats "Nueva Conversacion" al crear un nuevo chat, este se crea como registro y luego debo ingresar, deberia ingresar directamente me explico ? --LISTO
 
 2. Si entro a +info dentro de un chat, y luego lo elimino, al ingresar a un nuevo chat, ingreso a el +info no ingreso a el chat en si, me explico ? --LISTO
@@ -28,5 +30,5 @@
     a. posibilidad de ver miniatura de imagenes  --LISTO
     b. posibilidad de entender formato inteligente, si el bot responde en formato .md darle formato, o si responde en python darle los colores de python, me explico? --LISTO
 
-11. consultar a gemini cuestiones de arquitectura, project rules, planificar el back, dudas alli, como escalar? 
+### FASE 2
 
