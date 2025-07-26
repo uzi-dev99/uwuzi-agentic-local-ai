@@ -1,2 +1,0 @@
-com.uwuzi.assist.test:style/WhiteBackgroundTheme = 0x7f010001
-com.uwuzi.assist.test:style/WhiteBackgroundDialogTheme = 0x7f010000

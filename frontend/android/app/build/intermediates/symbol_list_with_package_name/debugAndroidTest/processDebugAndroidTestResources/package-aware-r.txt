@@ -1,3 +1,0 @@
-com.uwuzi.assist.test
-style WhiteBackgroundDialogTheme
-style WhiteBackgroundTheme
