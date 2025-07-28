@@ -14,6 +14,93 @@ export interface BackendMessage {
  * @param onChunk - Callback que se ejecuta por cada chunk recibido
  * @param onError - Callback que se ejecuta en caso de error
  */
+export async function invokeDirectChat(
+  messages: Message[],
+  files: File[],
+  onChunk: (chunk: string) => void,
+  onError: (error: Error) => void
+): Promise<void> {
+  try {
+    const backendUrl = import.meta.env.VITE_BACKEND_API_URL;
+    if (!backendUrl) {
+      throw new Error('VITE_BACKEND_API_URL no está configurada');
+    }
+
+    const formData = new FormData();
+    const backendMessages: BackendMessage[] = messages.map(msg => ({
+      role: msg.role === UserRole.USER ? 'user' : 'assistant',
+      content: msg.apiContent || msg.content
+    }));
+
+    formData.append('messages', JSON.stringify(backendMessages));
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+
+    const fullUrl = `${backendUrl}/chat/direct`;
+
+    const response = await fetch(fullUrl, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error del servidor: ${response.status} ${response.statusText}`);
+    }
+
+    if (!response.body) {
+      throw new Error('No se recibió cuerpo de respuesta del servidor');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        buffer += chunk;
+
+        let braceCount = 0;
+        let lastCut = 0;
+        for (let i = 0; i < buffer.length; i++) {
+          if (buffer[i] === '{') {
+            braceCount++;
+          } else if (buffer[i] === '}') {
+            braceCount--;
+            if (braceCount === 0) {
+              const jsonStr = buffer.substring(lastCut, i + 1);
+              if (jsonStr.trim()) {
+                try {
+                  const jsonChunk = JSON.parse(jsonStr);
+                  if (jsonChunk.response) {
+                    onChunk(jsonChunk.response);
+                  }
+                } catch (e) {
+                  // Ignorar errores de parseo, puede ser un fragmento
+                }
+              }
+              lastCut = i + 1;
+            }
+          }
+        }
+        if (lastCut > 0) {
+          buffer = buffer.substring(lastCut);
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  } catch (error) {
+    console.error('Error en invokeDirectChat:', error);
+    onError(error instanceof Error ? error : new Error('Error desconocido'));
+  }
+}
+
+
 export async function invokeAgent(
   messages: Message[],
   onChunk: (chunk: string) => void,
@@ -40,7 +127,7 @@ export async function invokeAgent(
     console.log('Backend messages formatted:', backendMessages);
     
     // Construir la URL completa del endpoint
-    const fullUrl = `${backendUrl}/agent/invoke`;
+    const fullUrl = `${backendUrl}/agent/invoke`; // Mantener para futura V2
     console.log('Full URL:', fullUrl);
 
     // Realizar la petición POST al endpoint del agente

@@ -5,7 +5,7 @@ import { UserRole, Message as MessageType, ChatMode } from '../types';
 import ChatHeader from '../components/ChatHeader';
 import MessageList from '../components/MessageList';
 import MessageInput from '../components/MessageInput';
-import { invokeAgent } from '../services/backendService';
+import { invokeDirectChat } from '../services/backendService';
 
 const ChatPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,7 +28,22 @@ const ChatPage: React.FC = () => {
   }, [id, chat, navigate, getChatById]);
 
 
-  const handleSendMessage = async (message: Omit<MessageType, 'id' | 'role' | 'timestamp'>) => {
+      const handleSendMessage = async (message: Omit<MessageType, 'id' | 'role' | 'timestamp'>, attachments: File[]) => {
+    if (!id || !chat) return;
+
+    
+
+    // Add user message to state
+    addMessage(id, { role: UserRole.USER, ...message });
+    
+    // Immediately add placeholder for assistant's response
+    const assistantMessageId = addMessage(id, { role: UserRole.ASSISTANT, content: '' });
+
+    if (chat.mode === 'agent') {
+      updateAssistantMessage(id, assistantMessageId, "Sorry, Agent Mode is not available in this version. Please switch to Chat Mode.");
+      setIsLoading(false);
+      return;
+    }
     if (!id || !chat) return;
     setIsLoading(true);
 
@@ -39,18 +54,13 @@ const ChatPage: React.FC = () => {
         apiContent: message.apiContent,
         timestamp: new Date().toISOString() 
     };
-    
-    // Add user message to state
-    addMessage(id, { role: UserRole.USER, ...message });
-    
-    // Immediately add placeholder for assistant's response
-    const assistantMessageId = addMessage(id, { role: UserRole.ASSISTANT, content: '' });
 
     const currentHistory: MessageType[] = [...chat.messages, userMessageForHistory];
 
     try {
-      await invokeAgent(
+            await invokeDirectChat(
         currentHistory,
+        attachments,
         (chunk: string) => {
           updateAssistantMessage(id, assistantMessageId, chunk);
         },

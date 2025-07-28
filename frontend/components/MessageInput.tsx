@@ -10,32 +10,34 @@ import CameraModal from './CameraModal';
 import { Message } from '../types';
 
 interface MessageInputProps {
-  onSendMessage: (message: Omit<Message, 'id' | 'role' | 'timestamp'>) => void;
+  onSendMessage: (message: Omit<Message, 'id' | 'role' | 'timestamp'>, attachments: File[]) => void;
   isLoading: boolean;
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading }) => {
   const [text, setText] = useState('');
   const [isCameraOpen, setCameraOpen] = useState(false);
-  const [attachment, setAttachment] = useState<FileData | null>(null);
+  const [attachment, setAttachment] = useState<{ data: FileData; file: File } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleAudioComplete = useCallback((result: { audioUrl: string | null; audioBlob: Blob | null }) => {
     if(result.audioUrl) {
-        onSendMessage({ content: `(Voice message was recorded, but audio sending is not implemented yet.)` });
+        onSendMessage({ content: `(Voice message was recorded, but audio sending is not implemented yet.)` }, []);
     }
   }, [onSendMessage]);
 
   const { status: recordingStatus, toggleRecording, error: audioError, clearError: clearAudioError } = useAudioRecorder(handleAudioComplete);
 
-  const handleFileSelect = (fileData: FileData) => {
-    // All files now use the attachment preview for consistency
-    setAttachment(fileData);
+    const handleFileSelect = (fileData: FileData, file: File) => {
+    setAttachment({ data: fileData, file });
   };
 
   const handlePhotoCapture = (dataUrl: string) => {
-    onSendMessage({ content: dataUrl, apiContent: dataUrl });
+    // Esto es para la cámara, que ya envía un data URL. No hay un objeto File aquí.
+    // La lógica del backend deberá poder manejar un base64 directamente en el contenido.
+    // Por ahora, lo dejamos así, ya que el plan se centra en la carga de archivos.
+    onSendMessage({ content: dataUrl, apiContent: dataUrl }, []);
     setCameraOpen(false);
   }
   
@@ -47,16 +49,16 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading })
     let messageToSend: Omit<Message, 'id' | 'role' | 'timestamp'>;
 
     if (attachment) {
-      if (attachment.type === 'image') {
+      if (attachment.data.type === 'image') {
         // For images, the content itself is the data URL. Text is ignored when sending an image this way.
-        messageToSend = { content: attachment.content, apiContent: attachment.content };
+        messageToSend = { content: attachment.data.content, apiContent: attachment.data.content };
       } else {
-        const displayContent = `(File Attached: ${attachment.name})\n${text.trim()}`.trim();
+        const displayContent = `(File Attached: ${attachment.data.name})\n${text.trim()}`.trim();
         let apiContent: string;
-        if (attachment.readable) {
-          apiContent = `Attached file "${attachment.name}":\n\n${attachment.content}\n\n---\n\n${text.trim()}`.trim();
+        if (attachment.data.readable) {
+          apiContent = `Attached file "${attachment.data.name}":\n\n${attachment.data.content}\n\n---\n\n${text.trim()}`.trim();
         } else {
-          apiContent = `(Se adjuntó un archivo no legible: ${attachment.name})\n\n${text.trim()}`.trim();
+          apiContent = `(Se adjuntó un archivo no legible: ${attachment.data.name})\n\n${text.trim()}`.trim();
         }
         messageToSend = { content: displayContent, apiContent };
       }
@@ -64,8 +66,8 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading })
       messageToSend = { content: text.trim(), apiContent: text.trim() };
     }
     
-    if (messageToSend.content) {
-      onSendMessage(messageToSend);
+        if (messageToSend.content) {
+      onSendMessage(messageToSend, attachment ? [attachment.file] : []);
     }
 
     setText('');
@@ -113,11 +115,11 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading })
         {attachment && (
             <div className="bg-secondary p-2 rounded-lg mb-2 flex justify-between items-center animate-fade-in-up">
                 <div className="flex items-center gap-2 min-w-0">
-                    {attachment.type === 'image' 
-                        ? <img src={attachment.content} className="w-8 h-8 rounded object-cover" />
+                    {attachment.data.type === 'image' 
+                        ? <img src={attachment.data.content} className="w-8 h-8 rounded object-cover" />
                         : <FileIcon className="w-5 h-5 text-muted flex-shrink-0"/>
                     }
-                    <span className="text-sm text-light truncate">{attachment.name}</span>
+                    <span className="text-sm text-light truncate">{attachment.data.name}</span>
                 </div>
                 <button onClick={() => setAttachment(null)} className="font-bold text-lg leading-none p-1 text-muted hover:text-light" aria-label="Remove attachment">&times;</button>
             </div>

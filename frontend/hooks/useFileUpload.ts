@@ -7,7 +7,7 @@ export interface FileData {
     readable: boolean;
 }
 
-export const useFileUpload = (onFileSelect: (fileData: FileData) => void) => {
+export const useFileUpload = (onFileSelect: (fileData: FileData, file: File) => void) => {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,7 +40,7 @@ export const useFileUpload = (onFileSelect: (fileData: FileData) => void) => {
             fileData = { name: file.name, content: file.name, type: 'other', readable: false };
         }
         
-        onFileSelect(fileData);
+        onFileSelect(fileData, file);
         setIsUploading(false);
     };
 
@@ -57,7 +57,7 @@ export const useFileUpload = (onFileSelect: (fileData: FileData) => void) => {
       reader.readAsText(file);
     } else {
       // For unreadable files, we trigger onload directly without reading the content
-      onFileSelect({ name: file.name, content: file.name, type: 'other', readable: false });
+      onFileSelect({ name: file.name, content: file.name, type: 'other', readable: false }, file);
       setIsUploading(false);
     }
 

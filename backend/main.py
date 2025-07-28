@@ -1,18 +1,17 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 from fastapi.middleware.cors import CORSMiddleware
 import logging
-import os
+import json
 
-# Importar el servicio del agente
-try:
-    from services.agent_service import invoke_agent
-except ImportError:
-    logging.error("Could not import invoke_agent from services.agent_service. Ensure structure is correct.")
-    async def invoke_agent(*args, **kwargs):
-        yield '{"error": "Agent service not loaded."}\n'
+# Importar servicios
+from services.chat_service import generate_response
+
+# Setup basic logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="uWuzi-Assist Backend",
@@ -43,24 +42,46 @@ app.add_middleware(
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Pydantic Models
-class AgentRequest(BaseModel):
+# --- Pydantic Models ---
+class ChatRequest(BaseModel):
     messages: List[Dict[str, str]]
 
-@app.post("/api/v1/agent/invoke")
-async def agent_invoke_endpoint(payload: AgentRequest, request: Request):
+# --- Endpoints ---
+
+@app.post("/api/v1/chat/direct")
+async def direct_chat_endpoint(
+    messages: str = Form(...),
+    files: Optional[List[UploadFile]] = File(None)
+):
     """
-    Endpoint principal del agente que enruta las peticiones según la intención del usuario.
+    Endpoint para comunicación directa con el modelo multimodal.
+    Recibe el historial de chat y archivos adjuntos (imágenes, audio).
     """
-    logger.info(f"Received agent invoke request with {len(payload.messages)} messages")
     try:
+        # El historial de mensajes llega como un string JSON, hay que parsearlo
+        messages_list = json.loads(messages)
+        logger.info(f"Received direct chat request with {len(messages_list)} messages.")
+        
         return StreamingResponse(
-            invoke_agent(payload.dict()),
+            generate_response(messages=messages_list, files=files),
             media_type="application/x-ndjson"
         )
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON format for messages.")
     except Exception as e:
-        logger.error(f"Error in agent_invoke_endpoint: {e}", exc_info=True)
+        logger.error(f"Error in direct_chat_endpoint: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/agent/invoke")
+async def agent_invoke_placeholder():
+    """
+    Placeholder para el endpoint del agente de la V2.
+    Actualmente devuelve un mensaje informativo.
+    """
+    async def stream_placeholder():
+        yield json.dumps({"message": "Agent mode is not available in this version."})
+    
+    return StreamingResponse(stream_placeholder(), media_type="application/x-ndjson")
 
 @app.get("/")
 async def read_root():
