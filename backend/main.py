@@ -1,22 +1,18 @@
-from fastapi import FastAPI, HTTPException, Security, Depends, Request
-from fastapi.security.api_key import APIKeyHeader
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import List, Dict, Optional, AsyncGenerator
+from typing import List, Dict, Optional
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 import os
 
-# Attempt to import the chat_service
+# Importar el servicio del agente
 try:
-    from services.chat_service import get_ollama_response
+    from services.agent_service import invoke_agent
 except ImportError:
-    # This fallback is for the case where the file is created standalone
-    # and the services directory might not be in PYTHONPATH yet.
-    # In a real execution, FastAPI structure should handle this.
-    logging.warning("Could not import get_ollama_response from services.chat_service. Ensure structure is correct.")
-    async def get_ollama_response(*args, **kwargs) -> AsyncGenerator[str, None]:
-        yield "Error: Chat service not loaded."
+    logging.error("Could not import invoke_agent from services.agent_service. Ensure structure is correct.")
+    async def invoke_agent(*args, **kwargs):
+        yield '{"error": "Agent service not loaded."}\n'
 
 app = FastAPI(
     title="uWuzi-Assist Backend",
@@ -30,6 +26,8 @@ origins = [
     "http://localhost:8080",
     "http://localhost:8081",
     "http://localhost:5466",
+    "http://localhost:5173",  # Para desarrollo del frontend
+    "http://localhost:5174",  # Puerto alternativo para desarrollo del frontend
 ]
 
 app.add_middleware(
@@ -45,44 +43,23 @@ app.add_middleware(
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# API Key Configuration
-API_KEY = os.getenv("API_KEY_SECRET")
-API_KEY_NAME = "X-API-KEY"
-api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
-
-async def get_api_key(api_key_header: Optional[str] = Security(api_key_header)):
-    if api_key_header == API_KEY:
-        return api_key_header
-    else:
-        logger.warning(f"Invalid API Key received: {api_key_header}")
-        raise HTTPException(status_code=403, detail="Could not validate credentials")
-
 # Pydantic Models
-class DirectChatMessage(BaseModel):
-    message: str
-    history: List[Dict[str, str]] = []
-    model: Optional[str] = None
-    temperature: Optional[float] = None
-    images: Optional[List[str]] = None # <--- Cambiado de attachments a images
+class AgentRequest(BaseModel):
+    messages: List[Dict[str, str]]
 
-@app.post("/direct_chat", dependencies=[Depends(get_api_key)])
-async def direct_chat_endpoint(payload: DirectChatMessage, request: Request):
-    api_key = request.headers.get(API_KEY_NAME)
-    logger.info(f"Received direct_chat request. Model: {payload.model}, Temp: {payload.temperature}")
+@app.post("/api/v1/agent/invoke")
+async def agent_invoke_endpoint(payload: AgentRequest, request: Request):
+    """
+    Endpoint principal del agente que enruta las peticiones según la intención del usuario.
+    """
+    logger.info(f"Received agent invoke request with {len(payload.messages)} messages")
     try:
         return StreamingResponse(
-            get_ollama_response(
-                chat_history=payload.history,
-                current_message=payload.message,
-                api_key=api_key,
-                model_name=payload.model,
-                temperature=payload.temperature,
-                images=payload.images # <--- Cambiado de attachments a images
-            ),
-            media_type="text/event-stream"
+            invoke_agent(payload.dict()),
+            media_type="application/x-ndjson"
         )
     except Exception as e:
-        logger.error(f"Error in direct_chat_endpoint: {e}", exc_info=True)
+        logger.error(f"Error in agent_invoke_endpoint: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/")

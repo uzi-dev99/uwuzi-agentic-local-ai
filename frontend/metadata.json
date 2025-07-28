@@ -1,0 +1,8 @@
+{
+  "name": "Wuzi Chat AI",
+  "description": "A mobile-first, highly efficient chat application powered by a custom backend agent. It allows users to manage conversations in folders, send text, voice, and image messages, and experience real-time streaming responses in a clean, modern interface.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}

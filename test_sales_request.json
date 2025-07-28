@@ -1,0 +1,8 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "Necesito un reporte de ventas del mes actual"
+    }
+  ]
+}

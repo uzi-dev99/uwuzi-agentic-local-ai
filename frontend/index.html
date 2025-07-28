@@ -2,23 +2,70 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no" />
-    <title>uWuzi</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
-
-    <meta property="og:title" content="uWuzi" />
-    <meta property="og:description" content="Lovable Generated Project" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-  </head>
-
-  <body>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wuzi Chat AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'primary': '#111827',
+              'secondary': '#1F2937',
+              'user-bubble': '#047857',
+              'accent-violet': '#8b5cf6',
+              'accent-green': '#10b981',
+              'light': '#E5E7EB',
+              'muted': '#6B7281',
+              'danger': '#ef4444'
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      /* Minimalist Scrollbar for Webkit browsers (Chrome, Safari, Edge) */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #111827; /* primary color */
+      }
+      ::-webkit-scrollbar-thumb {
+        background-color: #6B7281; /* muted color */
+        border-radius: 10px;
+        border: 2px solid #111827; /* primary color */
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background-color: #10b981; /* accent-green */
+      }
+      
+      /* Minimalist Scrollbar for Firefox */
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: #6B7281 #111827; /* thumb color track color */
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.1.0/",
+    "react": "https://esm.sh/react@^19.1.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.7.1",
+    "react-syntax-highlighter/": "https://esm.sh/react-syntax-highlighter@^15.6.1/",
+    "react-syntax-highlighter": "https://esm.sh/react-syntax-highlighter@^15.6.1",
+    "react-markdown": "https://esm.sh/react-markdown@^10.1.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-primary">
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>
