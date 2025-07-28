@@ -1,0 +1,6 @@
+.code-block {
+  overflow-x: auto !important;
+  white-space: pre !important;
+  word-break: normal !important;
+  max-width: 100% !important;
+}

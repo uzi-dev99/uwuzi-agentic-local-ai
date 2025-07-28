@@ -35,7 +35,7 @@ const MessageContent: React.FC<MessageContentProps> = ({ content }) => {
               <span className="font-mono text-sm truncate">{fileName}</span>
           </div>
           {restOfMessage && (
-            <div className="prose prose-invert prose-sm max-w-none text-light">
+            <div className="prose prose-invert prose-sm text-light">
                <ReactMarkdown>{restOfMessage}</ReactMarkdown>
             </div>
           )}
@@ -45,7 +45,7 @@ const MessageContent: React.FC<MessageContentProps> = ({ content }) => {
 
   return (
     <div
-      className={`prose prose-invert prose-sm max-w-none text-light`}
+      className={`prose prose-invert prose-sm text-light`}
     >
       <ReactMarkdown
         components={{
@@ -53,12 +53,30 @@ const MessageContent: React.FC<MessageContentProps> = ({ content }) => {
             const match = /language-(\w+)/.exec(className || '');
             return match ? (
               <SyntaxHighlighter
-                style={atomDark as any}
-                language={match[1]}
-                PreTag="div"
-              >
-                {String(children).replace(/\n$/, '')}
-              </SyntaxHighlighter>
+                  style={atomDark as any}
+                  language={match[1]}
+                  PreTag="div"
+                  customStyle={{
+                    margin: 0,
+                    padding: '12px',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    lineHeight: '1.4',
+                    overflowX: 'auto',
+                    maxWidth: '100%',
+                    whiteSpace: 'pre',
+                    wordBreak: 'normal',
+                  }}
+                  codeTagProps={{
+                    style: {
+                      whiteSpace: 'pre',
+                      wordBreak: 'normal',
+                      display: 'block',
+                    },
+                  }}
+                >
+                  {String(children).replace(/\n$/, '')}
+                </SyntaxHighlighter>
             ) : (
               <code className="bg-secondary text-accent-violet px-1.5 py-1 rounded-md" {...props}>
                 {children}

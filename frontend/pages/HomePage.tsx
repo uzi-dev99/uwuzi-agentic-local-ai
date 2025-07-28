@@ -1,7 +1,9 @@
 import React from 'react';
+import { useGesture } from 'react-use-gesture';
 import HomeHeader from '../components/HomeHeader';
 import ChatList from '../components/ChatList';
 import { useChatStore } from '../contexts/ChatContext';
+import { useSidebar } from '../contexts/SidebarContext';
 import FloatingActionButton from '../components/FloatingActionButton';
 
 interface HomePageProps {
@@ -13,6 +15,15 @@ interface HomePageProps {
 
 const HomePage: React.FC<HomePageProps> = ({ activeFilter }) => {
   const { folders } = useChatStore();
+  const { toggleSidebar } = useSidebar();
+
+  const bind = useGesture({
+    onDrag: ({ down, movement: [mx], direction: [dx], velocity }) => {
+      if (down && dx > 0 && mx > 100 && velocity > 0.5) {
+        toggleSidebar();
+      }
+    },
+  });
 
   let title = 'All Conversations';
   if (activeFilter.type === 'folder' && activeFilter.value) {
@@ -23,7 +34,7 @@ const HomePage: React.FC<HomePageProps> = ({ activeFilter }) => {
   }
 
   return (
-    <div className="h-full w-full flex flex-col bg-primary relative">
+    <div {...bind()} className="h-full w-full flex flex-col bg-primary relative touch-none">
       <HomeHeader title={title} />
       <ChatList activeFilter={activeFilter} />
       <FloatingActionButton />

@@ -12,6 +12,7 @@ const ChatPage: React.FC = () => {
   const navigate = useNavigate();
   const { getChatById, addMessage, updateAssistantMessage, addTagToChat, removeTagFromChat, updateChatMode, renameChat } = useChatStore();
   const [isLoading, setIsLoading] = useState(false);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
   
   const chat = id ? getChatById(id) : undefined;
 
@@ -28,7 +29,14 @@ const ChatPage: React.FC = () => {
   }, [id, chat, navigate, getChatById]);
 
 
-      const handleSendMessage = async (message: Omit<MessageType, 'id' | 'role' | 'timestamp'>, attachments: File[]) => {
+  const handleStopGenerating = () => {
+    if (abortController) {
+      abortController.abort();
+      setAbortController(null);
+    }
+  };
+
+  const handleSendMessage = async (message: Omit<MessageType, 'id' | 'role' | 'timestamp'>, attachments: File[]) => {
     if (!id || !chat) return;
 
     
@@ -57,23 +65,37 @@ const ChatPage: React.FC = () => {
 
     const currentHistory: MessageType[] = [...chat.messages, userMessageForHistory];
 
+    const controller = new AbortController();
+    setAbortController(controller);
+
     try {
-            await invokeDirectChat(
+      await invokeDirectChat(
         currentHistory,
         attachments,
         (chunk: string) => {
           updateAssistantMessage(id, assistantMessageId, chunk);
         },
         (error: Error) => {
-          console.error("Failed to get streaming response", error);
-          updateAssistantMessage(id, assistantMessageId, "Sorry, I encountered an error.");
-        }
+          if (error.name === 'AbortError') {
+            console.log('Request aborted by user.');
+            updateAssistantMessage(id, assistantMessageId, ' (Stopped)');
+          } else {
+            console.error('Failed to get streaming response', error);
+            updateAssistantMessage(id, assistantMessageId, 'Sorry, I encountered an error.');
+          }
+        },
+        controller.signal
       );
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log('Fetch aborted.');
+      } else {
         console.error("Failed to invoke agent", error);
         updateAssistantMessage(id, assistantMessageId, "Sorry, I encountered an error.");
+      }
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
+      setAbortController(null);
     }
   };
 
@@ -86,7 +108,7 @@ const ChatPage: React.FC = () => {
   }
 
   return (
-    <div className="h-full w-full flex flex-col bg-primary">
+    <div className="h-full w-full flex flex-col bg-primary overflow-x-hidden">
       <ChatHeader 
         chat={chat} 
         onUpdateMode={(mode: ChatMode) => updateChatMode(chat.id, mode)}
@@ -95,7 +117,7 @@ const ChatPage: React.FC = () => {
         onRenameChat={(newTitle: string) => renameChat(chat.id, newTitle)}
       />
       <MessageList messages={chat.messages} />
-      <MessageInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+      <MessageInput onSendMessage={handleSendMessage} isLoading={isLoading} onStopGenerating={handleStopGenerating} />
     </div>
   );
 };

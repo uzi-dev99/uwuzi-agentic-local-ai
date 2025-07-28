@@ -18,7 +18,8 @@ export async function invokeDirectChat(
   messages: Message[],
   files: File[],
   onChunk: (chunk: string) => void,
-  onError: (error: Error) => void
+  onError: (error: Error) => void,
+  signal: AbortSignal
 ): Promise<void> {
   try {
     const backendUrl = import.meta.env.VITE_BACKEND_API_URL;
@@ -42,6 +43,7 @@ export async function invokeDirectChat(
     const response = await fetch(fullUrl, {
       method: 'POST',
       body: formData,
+      signal,
     });
 
     if (!response.ok) {

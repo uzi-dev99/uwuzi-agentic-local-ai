@@ -12,9 +12,10 @@ import { Message } from '../types';
 interface MessageInputProps {
   onSendMessage: (message: Omit<Message, 'id' | 'role' | 'timestamp'>, attachments: File[]) => void;
   isLoading: boolean;
+  onStopGenerating: () => void;
 }
 
-const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading }) => {
+const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading, onStopGenerating }) => {
   const [text, setText] = useState('');
   const [isCameraOpen, setCameraOpen] = useState(false);
   const [attachment, setAttachment] = useState<{ data: FileData; file: File } | null>(null);
@@ -170,14 +171,27 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading })
             <MicIcon className="w-6 h-6" />
           </button>
 
-          <button
-            onClick={handleSend}
-            disabled={(!text.trim() && !attachment) || isLoading}
-            className="bg-accent-violet text-white p-2 rounded-full hover:bg-violet-500 disabled:bg-muted disabled:cursor-not-allowed"
-            aria-label="Send message"
-          >
-            <SendIcon className="w-6 h-6" />
-          </button>
+          {isLoading ? (
+            <button
+              onClick={onStopGenerating}
+              className="bg-danger text-white p-2 rounded-full hover:bg-red-500"
+              aria-label="Stop generating"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10h6v4H9z" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              onClick={handleSend}
+              disabled={!text.trim() && !attachment}
+              className="bg-accent-violet text-white p-2 rounded-full hover:bg-violet-500 disabled:bg-muted disabled:cursor-not-allowed"
+              aria-label="Send message"
+            >
+              <SendIcon className="w-6 h-6" />
+            </button>
+          )}
         </div>
       </div>
     </>

@@ -36,7 +36,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
                 </div>
             )}
             <div
-                className={`max-w-lg md:max-w-2xl rounded-xl px-4 py-2.5 shadow-md ${
+                className={`max-w-lg md:max-w-2xl rounded-xl px-4 py-2.5 shadow-md break-words overflow-x-auto ${
                 message.role === UserRole.USER
                     ? 'bg-user-bubble text-light'
                     : 'bg-secondary text-light'

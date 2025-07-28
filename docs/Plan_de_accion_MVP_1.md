@@ -151,22 +151,22 @@ Recuerda que la lógica que implementes para el botón "Atrás" será probada en
 
 **Objetivo:** Refinar la interfaz y la interacción para que la aplicación se sienta fluida y nativa en un dispositivo móvil, corrigiendo problemas de usabilidad antes del empaquetado final.
 
-  * **[ ] Control de Zoom y Desbordamiento de Contenido:**
+  * **[x] Control de Zoom y Desbordamiento de Contenido:**
       * **Bloquear Zoom:** En `frontend/index.html`, modificar la etiqueta `<meta name="viewport">` para incluir `user-scalable=no` y prevenir el "pinch-to-zoom".
       * **Scroll Horizontal en Código:** Aplicar CSS a los contenedores de bloques de código (`<pre>`) para que tengan `overflow-x: auto`. Esto permitirá el scroll horizontal solo en esos elementos cuando el contenido (como un script) sea demasiado ancho, solucionando el desbordamiento.
-  * **[ ] Implementar Botón para Detener Generación:**
+  * **[x] Implementar Botón para Detener Generación:**
       * **Lógica de Cancelación:** Integrar un `AbortController` en la llamada `fetch` del `backendService.ts`.
       * **Interfaz de Usuario:** Mostrar un botón "Detener" en la UI (por ejemplo, reemplazando el botón de "Enviar") mientras el bot está generando una respuesta.
       * **Funcionalidad:** Al hacer clic en "Detener", se debe llamar a `controller.abort()`, lo que cancelará la petición de streaming y detendrá la generación de texto.
-  * **[ ] Implementar Gestos Nativos:**
-      * **Integrar Librería de Gestos:** Añadir una librería como `react-use-gesture` al proyecto de frontend para un manejo de gestos táctiles robusto.
-      * **Desplegar Sidebar:** En la `HomePage`, usar la librería de gestos para detectar un deslizamiento hacia la derecha (swipe-right) en el área principal y llamar a la función que abre el Sidebar.
-  * **[ ] Integrar Funcionalidad del Botón "Atrás" de Android:**
-      * **Escuchar Evento Nativo:** Usar la API de Capacitor (`App.addListener('backButton', ...)`) para capturar el evento del botón "Atrás" del sistema operativo.
-      * **Lógica de Navegación Contextual:**
-          * Si el usuario está en una vista de chat (`ChatPage`), al presionar "Atrás" la aplicación debe navegar a la `HomePage`.
-          * Si el usuario ya está en la `HomePage`, el primer toque de "Atrás" debe mostrar un mensaje temporal (Toast) como "Presiona de nuevo para salir".
-          * Un segundo toque dentro de un corto período de tiempo (ej. 2 segundos) cerrará la aplicación (`App.exitApp()`).
+  * **[x] Implementar Gestos Nativos:**
+      * **[x] Integrar Librería de Gestos:** Añadir una librería como `react-use-gesture` al proyecto de frontend para un manejo de gestos táctiles robusto.
+      * **[x] Desplegar Sidebar:** En la `HomePage`, usar la librería de gestos para detectar un deslizamiento hacia la derecha (swipe-right) en el área principal y llamar a la función que abre el Sidebar.
+  * **[x] Integrar Funcionalidad del Botón "Atrás" de Android (Implementación Conceptual):**
+      * **[x] Escuchar Evento Nativo:** Implementación conceptual para navegador completada. Para Android nativo se usará la API de Capacitor (`App.addListener('backButton', ...)`) para capturar el evento del botón "Atrás" del sistema operativo.
+      * **[x] Lógica de Navegación Contextual:**
+          * **[x] Si el usuario está en una vista de chat (`ChatPage`), al presionar "Atrás" la aplicación debe navegar a la `HomePage`.
+          * **[x] Si el usuario ya está en la `HomePage`, el primer toque de "Atrás" debe mostrar un mensaje temporal (Toast) como "Presiona de nuevo para salir".
+          * **[x] Un segundo toque dentro de un corto período de tiempo (ej. 2 segundos) cerrará la aplicación (`App.exitApp()`).
 
 
 # Fase 4: Empaquetado para Android (Creación del APK)
@@ -175,12 +175,12 @@ Recuerda que la lógica que implementes para el botón "Atrás" será probada en
 
 ### 4.1. Prerrequisitos
 
-  * **[ ] Instalar Android Studio:** Descargar e instalar desde el sitio oficial de Android.
-  * **[ ] Instalar un JDK (Java Development Kit):** Asegurarse de tener un JDK compatible instalado y configurado en el sistema.
+  * **[x] Instalar Android Studio:** Descargar e instalar desde el sitio oficial de Android.
+  * **[x] Instalar un JDK (Java Development Kit):** Asegurarse de tener un JDK compatible instalado y configurado en el sistema.
 
 ### 4.2. Preparar el Proyecto de React para Capacitor
 
-  * **[ ] Instalar Dependencias de Capacitor:** En la terminal, dentro de la carpeta `/frontend`, ejecutar:
+  * **[x] Instalar Dependencias de Capacitor:** En la terminal, dentro de la carpeta `/frontend`, ejecutar:
     ```bash
     npm install @capacitor/core @capacitor/cli @capacitor/android
     ```
