@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { HashRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { App as CapacitorApp } from '@capacitor/app';
+import { StatusBar, Style } from '@capacitor/status-bar';
 import { SidebarProvider } from './contexts/SidebarContext';
 import { ChatProvider } from './contexts/ChatContext';
 import HomePage from './pages/HomePage';
@@ -15,24 +17,18 @@ const AppContent: React.FC = () => {
   const backPressCount = useRef(0);
 
   useEffect(() => {
-    // This is a conceptual implementation for the browser environment.
-    // In a real Capacitor app, you would use App.addListener('backButton', ...)
-    const handleBackButton = (e: PopStateEvent) => {
-      e.preventDefault(); // Prevent default browser back behavior
-
+    const handleBackButton = () => {
       if (location.pathname.startsWith('/chat/')) {
         navigate('/');
       } else if (location.pathname === '/') {
         backPressCount.current += 1;
 
         if (backPressCount.current === 2) {
-          // In a real app, this would be App.exitApp();
-          console.log('App would exit now.'); 
-          // Reset for demonstration purposes
-          backPressCount.current = 0; 
+          CapacitorApp.exitApp();
         } else {
-          // In a real app, you'd show a Toast notification
+          // Show toast notification: "Press back again to exit"
           console.log('Press back again to exit.');
+          // TODO: Implement actual toast notification
           setTimeout(() => {
             backPressCount.current = 0;
           }, 2000); // Reset after 2 seconds
@@ -40,12 +36,29 @@ const AppContent: React.FC = () => {
       }
     };
 
-    // We use a custom event to simulate the back button press for now
-    const customBackButtonHandler = () => handleBackButton(new PopStateEvent('popstate'));
+    let backButtonListener: any;
+
+    // Setup listeners
+    const setupListeners = async () => {
+      try {
+        // Listen for native Android back button
+        backButtonListener = await CapacitorApp.addListener('backButton', handleBackButton);
+      } catch (error) {
+        console.log('Capacitor App listener not available (web environment)');
+      }
+    };
+
+    setupListeners();
+
+    // Fallback for browser environment - custom event simulation
+    const customBackButtonHandler = () => handleBackButton();
     window.addEventListener('custom-back-button', customBackButtonHandler);
 
     // Cleanup
     return () => {
+      if (backButtonListener) {
+        backButtonListener.remove();
+      }
       window.removeEventListener('custom-back-button', customBackButtonHandler);
     };
   }, [location, navigate]);
@@ -65,6 +78,22 @@ const AppContent: React.FC = () => {
 }
 
 const App: React.FC = () => {
+  useEffect(() => {
+    // Configure StatusBar for mobile - acoplarse a la barra sin superponerse
+    const configureStatusBar = async () => {
+      try {
+        await StatusBar.setStyle({ style: Style.Dark });
+        await StatusBar.setBackgroundColor({ color: '#111827' }); // primary color
+        await StatusBar.setOverlaysWebView({ overlay: false }); // No superponer
+        await StatusBar.show(); // Asegurar que esté visible
+      } catch (error) {
+        console.log('StatusBar configuration not available (web environment)');
+      }
+    };
+
+    configureStatusBar();
+  }, []);
+
   return (
     <ChatProvider>
       <SidebarProvider>

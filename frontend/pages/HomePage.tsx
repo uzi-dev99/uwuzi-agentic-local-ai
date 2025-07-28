@@ -1,5 +1,6 @@
 import React from 'react';
 import { useGesture } from 'react-use-gesture';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import HomeHeader from '../components/HomeHeader';
 import ChatList from '../components/ChatList';
 import { useChatStore } from '../contexts/ChatContext';
@@ -20,6 +21,11 @@ const HomePage: React.FC<HomePageProps> = ({ activeFilter }) => {
   const bind = useGesture({
     onDrag: ({ down, movement: [mx], direction: [dx], velocity }) => {
       if (down && dx > 0 && mx > 100 && velocity > 0.5) {
+        // Provide haptic feedback when gesture is detected
+        Haptics.impact({ style: ImpactStyle.Light }).catch(() => {
+          // Haptics might not be available in browser environment
+          console.log('Haptics not available');
+        });
         toggleSidebar();
       }
     },
@@ -34,7 +40,7 @@ const HomePage: React.FC<HomePageProps> = ({ activeFilter }) => {
   }
 
   return (
-    <div {...bind()} className="h-full w-full flex flex-col bg-primary relative touch-none">
+    <div {...bind()} className="h-full w-full flex flex-col bg-primary relative touch-pan-y">
       <HomeHeader title={title} />
       <ChatList activeFilter={activeFilter} />
       <FloatingActionButton />

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Keyboard } from '@capacitor/keyboard';
 import { useChatStore } from '../contexts/ChatContext';
 import { UserRole, Message as MessageType, ChatMode } from '../types';
 import ChatHeader from '../components/ChatHeader';
@@ -13,6 +14,7 @@ const ChatPage: React.FC = () => {
   const { getChatById, addMessage, updateAssistantMessage, addTagToChat, removeTagFromChat, updateChatMode, renameChat } = useChatStore();
   const [isLoading, setIsLoading] = useState(false);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   
   const chat = id ? getChatById(id) : undefined;
 
@@ -27,6 +29,47 @@ const ChatPage: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [id, chat, navigate, getChatById]);
+
+  // Handle keyboard show/hide for mobile
+  useEffect(() => {
+    const handleKeyboardShow = () => {
+      // Scroll to bottom when keyboard appears
+      setTimeout(() => {
+        if (chatContainerRef.current) {
+          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+      }, 300);
+    };
+
+    const handleKeyboardHide = () => {
+      // Optional: Additional logic when keyboard hides
+    };
+
+    let keyboardShowListener: any;
+    let keyboardHideListener: any;
+
+    // Setup keyboard listeners
+    const setupKeyboardListeners = async () => {
+      try {
+        // Add keyboard listeners for Capacitor
+        keyboardShowListener = await Keyboard.addListener('keyboardWillShow', handleKeyboardShow);
+        keyboardHideListener = await Keyboard.addListener('keyboardWillHide', handleKeyboardHide);
+      } catch (error) {
+        console.log('Keyboard listeners not available (web environment)');
+      }
+    };
+
+    setupKeyboardListeners();
+
+    return () => {
+      if (keyboardShowListener) {
+        keyboardShowListener.remove();
+      }
+      if (keyboardHideListener) {
+        keyboardHideListener.remove();
+      }
+    };
+  }, []);
 
 
   const handleStopGenerating = () => {
@@ -108,7 +151,7 @@ const ChatPage: React.FC = () => {
   }
 
   return (
-    <div className="h-full w-full flex flex-col bg-primary overflow-x-hidden">
+    <div ref={chatContainerRef} className="h-full w-full flex flex-col bg-primary overflow-x-hidden overflow-y-auto">
       <ChatHeader 
         chat={chat} 
         onUpdateMode={(mode: ChatMode) => updateChatMode(chat.id, mode)}

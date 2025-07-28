@@ -184,24 +184,24 @@ Recuerda que la lógica que implementes para el botón "Atrás" será probada en
     ```bash
     npm install @capacitor/core @capacitor/cli @capacitor/android
     ```
-  * **[ ] Inicializar Capacitor:** Este comando crea el archivo de configuración de Capacitor.
+  * **[x] Inicializar Capacitor:** Este comando crea el archivo de configuración de Capacitor.
     ```bash
-    npx cap init "Wuzi Assist" "uk.wuzi.assist" --web-dir "dist"
+    npx cap init "Project J.A.R.V.I.S v1" "uk.wuzi.assist" --web-dir "dist"
     ```
-  * **[ ] Construir la Aplicación de React:** Crear la versión de producción de la app.
+  * **[x] Construir la Aplicación de React:** Crear la versión de producción de la app.
     ```bash
     npm run build
     ```
-  * **[ ] Añadir la Plataforma Android:** Este comando crea un proyecto nativo de Android.
+  * **[x] Añadir la Plataforma Android:** Este comando crea un proyecto nativo de Android.
     ```bash
     npx cap add android
     ```
 
 ### 4.3. Configuración y Sincronización
 
-  * **[ ] Sincronizar los Archivos Web:** Copiar los últimos cambios de la carpeta `/dist` al proyecto nativo de Android. Ejecutar este comando cada vez que se realicen cambios en el código de React.
+  * **[x] Sincronizar los Archivos Web:** Copiar los últimos cambios de la carpeta `/dist` al proyecto nativo de Android. Ejecutar este comando cada vez que se realicen cambios en el código de React.
     ```bash
-    npx cap sync
+    npx cap sync android
     ```
   * **[ ] Abrir el Proyecto en Android Studio:**
     ```bash
@@ -211,15 +211,165 @@ Recuerda que la lógica que implementes para el botón "Atrás" será probada en
       * En Android Studio, buscar y abrir el archivo `android/app/src/main/AndroidManifest.xml`.
       * Asegurarse de que el permiso de internet esté presente: `<uses-permission android:name="android.permission.INTERNET" />`.
 
-### 4.4. Generar el APK Firmado
+### 4.4. Generar el APK
 
-  * **[ ] Crear una Clave de Firma (Keystore):**
+  * **[x] Configurar SDK de Android:** Configurar la ruta del SDK en `local.properties`.
+  * **[x] Generar el APK de Debug:** Usar Gradle para construir el APK de desarrollo.
+    ```bash
+    .\gradlew assembleDebug
+    ```
+  * **[x] APK Generado:** El archivo `app-debug.apk` se encuentra en `frontend/android/app/build/outputs/apk/debug/`.
+  * **[ ] Generar el APK Firmado (Opcional para Producción):**
       * En Android Studio, ir a `Build > Generate Signed Bundle / APK....`
       * Seleccionar `APK` y hacer clic en `Next`.
       * Hacer clic en `Create new...` y rellenar el formulario para crear un archivo de clave (`.jks`). **Guardar este archivo y sus contraseñas en un lugar seguro.**
-  * **[ ] Generar el APK:**
       * Con los datos del keystore cargados, seleccionar el tipo de build `release`.
       * Hacer clic en `Create`.
       * Localizar el archivo `.apk` generado en la carpeta `frontend/android/app/release/`.
+
+-----
+
+## Fase 5: Corrección de Problemas Post-Testeo Móvil
+
+**Objetivo:** Resolver los problemas identificados durante el primer testeo en dispositivo Android real (Android 15 - Xiaomi 12 Pro) para lograr una experiencia móvil nativa completa.
+
+### 5.1. Corrección de Gestos Táctiles
+
+  * **[ ] Instalar Plugins de Capacitor para Gestos:**
+    ```bash
+    npm install @capacitor/haptics
+    ```
+  * **[ ] Revisar Configuración de react-use-gesture:**
+      * Verificar que la librería esté correctamente instalada y configurada.
+      * Asegurar que los event listeners estén capturando eventos táctiles nativos en WebView.
+      * Revisar la configuración CSS `touch-action` en los elementos interactivos.
+  * **[ ] Implementar Feedback Háptico:**
+      * Integrar `@capacitor/haptics` para proporcionar retroalimentación táctil cuando se detecten gestos.
+      * Añadir vibración sutil al abrir/cerrar el sidebar con gestos.
+
+### 5.2. Implementación Real del Botón Back de Android ✅ COMPLETADO
+
+  * **[x] Instalar Plugin de App de Capacitor:**
+    ```bash
+    npm install @capacitor/app
+    ```
+  * **[x] Implementar Listener del Botón Back:**
+      * En el componente principal de la aplicación (`App.tsx`), implementado:
+        ```typescript
+        import { App } from '@capacitor/app';
+        
+        App.addListener('backButton', ({ canGoBack }) => {
+          // Lógica de navegación contextual implementada
+        });
+        ```
+  * **[x] Configurar Lógica de Navegación Contextual:**
+      * Si está en `ChatPage`, navegar a `HomePage`.
+      * Si está en `HomePage`, mostrar toast "Presiona de nuevo para salir".
+      * Segundo toque en 2 segundos: `App.exitApp()`.
+  * **[x] Compatibilidad con Android 15:**
+      * Configuraciones verificadas en `capacitor.config.ts`.
+      * Permisos correctos en `AndroidManifest.xml`.
+  * **[x] VALIDACIÓN FINAL:** ✅ **Funciona correctamente para todos los casos de uso.**
+
+### 5.3. Corrección de Conectividad con Backend ❌ PENDIENTE
+
+  * **[ ] Configurar IP Local en lugar de Localhost:**
+      * Identificar la IP local de la máquina donde corre el backend.
+      * Actualizar la configuración del frontend para usar la IP local (ej: `http://192.168.1.100:8000`).
+      * Crear variable de entorno para facilitar el cambio entre desarrollo local y producción.
+  * **[ ] Verificar Configuración CORS del Backend:**
+      * Asegurar que el backend permita peticiones desde la IP del dispositivo móvil.
+      * Configurar headers CORS apropiados para peticiones multimodales.
+  * **[ ] Implementar Manejo de Errores Mejorado:**
+      * Añadir logs detallados en el frontend para diagnosticar errores de conectividad.
+      * Implementar retry automático para peticiones fallidas.
+      * Mostrar mensajes de error específicos al usuario.
+  * **❌ PROBLEMA ACTUAL:** La comunicación con el backend sigue fallando. Los logs muestran peticiones exitosas (status 200) pero la app muestra "Sorry, I encountered an error."
+
+### 5.4. Solución del Problema del Teclado Virtual ⚠️ CASI CORRECTO
+
+  * **[x] Instalar Plugin de Teclado de Capacitor:**
+    ```bash
+    npm install @capacitor/keyboard
+    ```
+  * **[x] Configurar Viewport Dinámico:**
+      * Implementados listeners para eventos `keyboardWillShow` y `keyboardWillHide` en `ChatPage.tsx`.
+      * Ajuste dinámico de la altura del contenedor de chat cuando aparece el teclado.
+  * **[x] Implementar Scroll Automático:**
+      * Scroll automático implementado para mantener visible el input de mensaje.
+      * El último mensaje del chat permanece visible cuando aparece el teclado.
+  * **[x] Configurar Capacitor para Resize:**
+      * En `capacitor.config.ts`, configurar:
+        ```typescript
+        plugins: {
+          Keyboard: {
+            resize: KeyboardResize.Body, // 'body' es correcto para React puro (no Ionic)
+            resizeOnFullScreen: true
+          }
+        }
+        ```
+      * **Nota:** Para aplicaciones React puras (no Ionic), `KeyboardResize.Body` es la opción correcta ya que permite que el WebView se redimensione automáticamente cuando aparece el teclado virtual.
+  * **⚠️ PROBLEMA PENDIENTE:** Queda un espacio gris extra cuando aparece el teclado. Sospecha: relacionado con el problema de la barra de estado.
+
+### 5.5. Corrección de la Barra de Estado (Status Bar) ❌ REQUIERE REVISIÓN
+
+  * **[x] Instalar Plugin de Status Bar:**
+    ```bash
+    npm install @capacitor/status-bar
+    ```
+  * **[x] Configurar Safe Area en CSS:**
+      * Actualizado `index.html` con `viewport-fit=cover`.
+      * CSS variables para safe area implementadas en la aplicación.
+  * **[x] Configurar Status Bar Overlay:**
+      * Configuración de status bar implementada en `App.tsx`:
+        ```typescript
+        import { StatusBar, Style } from '@capacitor/status-bar';
+        
+        StatusBar.setStyle({ style: Style.Dark });
+        StatusBar.setOverlaysWebView({ overlay: false });
+        StatusBar.setBackgroundColor({ color: '#111827' });
+        ```
+  * **[x] Ajustar Tema de la Aplicación:**
+      * Color de la status bar configurado para coincidir con el tema oscuro de la aplicación (#111827).
+      * Configuración apropiada para el modo oscuro implementada.
+  * **❌ PROBLEMAS IDENTIFICADOS:**
+      * **Scroll no deseado:** La "dimensión extra" permite scroll vertical que corta el botón de nuevo chat.
+      * **Superposición:** La barra de estado vuelve a superponerse en algunos casos.
+      * **Impacto en teclado:** Este problema parece estar relacionado con el espacio gris extra del teclado.
+  * **[ ] TAREAS PENDIENTES:**
+      * Revisar y ajustar la lógica de safe areas.
+      * Corregir el cálculo de altura del viewport.
+      * Eliminar el scroll vertical no deseado.
+      * Asegurar que la status bar no se superponga al contenido.
+
+### 5.6. Testing y Validación Final
+
+  * **[x] Rebuild y Re-sync:**
+      * Ejecutar `npm run build` para incorporar todos los cambios.
+      * Ejecutar `npx cap sync android` para sincronizar con el proyecto nativo.
+  * **[x] Generar Nuevo APK de Testing:**
+      * Construir nuevo APK con las correcciones implementadas.
+      * Instalar y probar en el dispositivo Android 15.
+  * **[x] Validar Cada Problema Corregido:**
+      * ✅ **Gestos de deslizamiento:** Funcionan correctamente.
+      * ✅ **Botón back de Android:** Responde apropiadamente en todos los casos.
+      * ❌ **Conectividad con backend:** Sigue fallando (logs muestran 200 pero app muestra error).
+      * ⚠️ **Teclado virtual:** Casi correcto, pero queda espacio gris extra.
+      * ❌ **Barra de estado:** Problemas de scroll y superposición persisten.
+
+### 5.7. Problemas Críticos Pendientes (Próxima Iteración)
+
+  * **[ ] PRIORIDAD ALTA - Corregir Status Bar y Safe Areas:**
+      * Revisar implementación actual de safe areas en CSS.
+      * Ajustar configuración de `StatusBar.setOverlaysWebView()`.
+      * Eliminar scroll vertical no deseado que corta el botón de nuevo chat.
+      * Corregir cálculo de altura del viewport para evitar superposición.
+  * **[ ] PRIORIDAD ALTA - Solucionar Conectividad Backend:**
+      * Investigar por qué las peticiones exitosas (200) no se procesan correctamente en el frontend.
+      * Revisar manejo de respuesta streaming en `backendService.ts`.
+      * Verificar configuración CORS y headers de respuesta.
+  * **[ ] PRIORIDAD MEDIA - Ajustar Teclado Virtual:**
+      * Eliminar espacio gris extra relacionado con problemas de status bar.
+      * Verificar configuración de `KeyboardResize.Body` en contexto de safe areas corregidas.
 
 -----
