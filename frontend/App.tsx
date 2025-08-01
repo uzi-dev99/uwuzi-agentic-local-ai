@@ -91,22 +91,6 @@ const AppContent: React.FC = () => {
 }
 
 const App: React.FC = () => {
-  useEffect(() => {
-    // Configure StatusBar for mobile - acoplarse a la barra sin superponerse
-    const configureStatusBar = async () => {
-      try {
-        await StatusBar.setStyle({ style: Style.Dark });
-        await StatusBar.setBackgroundColor({ color: '#111827' }); // primary color
-        await StatusBar.setOverlaysWebView({ overlay: false }); // No superponer
-        await StatusBar.show(); // Asegurar que esté visible
-      } catch (error) {
-        console.log('StatusBar configuration not available (web environment)');
-      }
-    };
-
-    configureStatusBar();
-  }, []);
-
   return (
     <ChatProvider>
       <SidebarProvider>

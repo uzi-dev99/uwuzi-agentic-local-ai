@@ -1,4 +1,5 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
 interface CameraModalProps {
   onCapture: (dataUrl: string) => void;
@@ -6,54 +7,52 @@ interface CameraModalProps {
 }
 
 const CameraModal: React.FC<CameraModalProps> = ({ onCapture, onClose }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const takePicture = async () => {
+    try {
+      const image = await Camera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.Uri, // Use URI to handle large images better
+        source: CameraSource.Camera,
+      });
+
+      if (image.webPath) {
+        // Convert webPath to a data URL to display
+        const response = await fetch(image.webPath);
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setCapturedImage(reader.result as string);
+        };
+        reader.readAsDataURL(blob);
+      }
+
+    } catch (err) {
+      // Handle error (e.g., user canceled the camera)
+      if (err instanceof Error && err.message === 'User cancelled photos app') {
+        // User cancelled, so just close the modal without an error message
+        onClose();
+        return;
+      }
+      console.error('Camera error:', err);
+      setError('Could not take picture. Please try again.');
+      // Close the modal on other errors too after a delay, or let the user close it
+      setTimeout(() => onClose(), 2000); // Close after 2s to show the error
+    }
+  };
 
   useEffect(() => {
-    const enableStream = async () => {
-      try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: 'environment' } 
-        });
-        setStream(mediaStream);
-        if (videoRef.current) {
-          videoRef.current.srcObject = mediaStream;
-        }
-      } catch (err) {
-        setError('Could not access camera. Please grant permission in your browser settings.');
-        console.error("Camera access error:", err);
-      }
-    };
-
-    if (!stream) {
-        enableStream();
+    // Automatically open the camera when the modal is rendered
+    if (!capturedImage) {
+      takePicture();
     }
+  }, [capturedImage]);
 
-    return () => {
-      stream?.getTracks().forEach(track => track.stop());
-    };
-  }, [stream]);
-
-  const handleCapture = useCallback(() => {
-    if (videoRef.current && canvasRef.current) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const context = canvas.getContext('2d');
-      context?.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
-      const dataUrl = canvas.toDataURL('image/jpeg');
-      setCapturedImage(dataUrl);
-      stream?.getTracks().forEach(track => track.stop());
-    }
-  }, [stream]);
-  
   const handleRetake = () => {
-    setCapturedImage(null);
-    setStream(null); // This will trigger the useEffect to get the stream again
+    setCapturedImage(null); // This will trigger the useEffect to take a new picture
   };
 
   const handleUsePhoto = () => {
@@ -71,33 +70,31 @@ const CameraModal: React.FC<CameraModalProps> = ({ onCapture, onClose }) => {
         {error && <div className="text-danger text-center mb-4">{error}</div>}
 
         <div className="relative aspect-video bg-black rounded-md overflow-hidden">
-            {capturedImage ? (
-                <img src={capturedImage} alt="Captured" className="w-full h-full object-contain" />
-            ) : (
-                <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
-            )}
-          <canvas ref={canvasRef} className="hidden" />
+          {capturedImage ? (
+            <img src={capturedImage} alt="Captured" className="w-full h-full object-contain" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted">
+              Opening Camera...
+            </div>
+          )}
         </div>
 
         <div className="mt-4 flex justify-center space-x-4">
-            {capturedImage ? (
-                <>
-                    <button onClick={handleRetake} className="bg-secondary hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg">
-                        Retake
-                    </button>
-                    <button onClick={handleUsePhoto} className="bg-accent-violet hover:bg-violet-500 text-white font-bold py-2 px-6 rounded-lg">
-                        Use Photo
-                    </button>
-                </>
-            ) : (
-                <button onClick={handleCapture} disabled={!stream} className="bg-accent-violet hover:bg-violet-500 text-white font-bold py-3 px-6 rounded-full disabled:bg-muted">
-                    Capture
-                </button>
-            )}
+          {capturedImage && (
+            <>
+              <button onClick={handleRetake} className="bg-secondary hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg">
+                Retake
+              </button>
+              <button onClick={handleUsePhoto} className="bg-accent-violet hover:bg-violet-500 text-white font-bold py-2 px-6 rounded-lg">
+                Use Photo
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
   );
+
 };
 
 export default CameraModal;

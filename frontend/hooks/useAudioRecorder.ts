@@ -1,4 +1,5 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { VoiceRecorder, RecordingData } from 'capacitor-voice-recorder';
 
 type RecordingStatus = 'idle' | 'recording' | 'stopped';
 type AudioResult = {
@@ -6,64 +7,70 @@ type AudioResult = {
   audioBlob: Blob | null;
 };
 
+// Helper to convert base64 to Blob
+const base64toBlob = (base64Data: string, contentType: string) => {
+    const byteCharacters = atob(base64Data);
+    const byteArrays = [];
+    for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+        const slice = byteCharacters.slice(offset, offset + 512);
+        const byteNumbers = new Array(slice.length);
+        for (let i = 0; i < slice.length; i++) {
+            byteNumbers[i] = slice.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        byteArrays.push(byteArray);
+    }
+    return new Blob(byteArrays, { type: contentType });
+};
+
 export const useAudioRecorder = (onRecordingComplete: (audio: AudioResult) => void) => {
   const [status, setStatus] = useState<RecordingStatus>('idle');
   const [error, setError] = useState<string | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
 
   const startRecording = useCallback(async () => {
     if (status === 'recording') return;
     setError(null);
 
     try {
-      if (navigator.permissions && navigator.permissions.query) {
-        const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
-        if (permissionStatus.state === 'denied') {
-          setError('Microphone access is blocked. Please enable it in your browser settings for this site.');
-          setStatus('idle');
-          return;
-        }
+      const permission = await VoiceRecorder.requestAudioRecordingPermission();
+      if (!permission.value) {
+        setError('Microphone access was denied. Please enable it in the app settings.');
+        setStatus('idle');
+        return;
       }
-      
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      await VoiceRecorder.startRecording();
       setStatus('recording');
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
-      };
-      mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+    } catch (err) {
+      console.error('Failed to start recording', err);
+      setError('Could not start recording. Please try again.');
+      setStatus('idle');
+    }
+  }, [status]);
+
+  const stopRecording = useCallback(async () => {
+    if (status !== 'recording') return;
+
+    try {
+      const result: RecordingData = await VoiceRecorder.stopRecording();
+      if (result.value && result.value.recordDataBase64) {
+        const audioBlob = base64toBlob(result.value.recordDataBase64, result.value.mimeType);
         const audioUrl = URL.createObjectURL(audioBlob);
         onRecordingComplete({ audioUrl, audioBlob });
-        audioChunksRef.current = [];
-        stream.getTracks().forEach(track => track.stop());
-        setStatus('stopped');
-      };
-      mediaRecorderRef.current.start();
-    } catch (err) {
-      console.error('Failed to get audio stream', err);
-      setStatus('idle');
-      if (err instanceof DOMException && (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError')) {
-        setError('Microphone access was denied. To use this feature, please allow microphone access in your browser settings.');
-      } else if (err instanceof DOMException && err.name === 'NotFoundError') {
-        setError('No microphone found. Please ensure a microphone is connected and try again.');
-      } else {
-        setError('An error occurred while trying to access the microphone.');
       }
+      setStatus('stopped');
+    } catch (err) {
+      console.error('Failed to stop recording', err);
+      setError('Could not stop recording. Please try again.');
+      setStatus('idle');
     }
   }, [status, onRecordingComplete]);
 
-  const stopRecording = useCallback(() => {
-    if (status !== 'recording' || !mediaRecorderRef.current) return;
-    mediaRecorderRef.current.stop();
-  }, [status]);
-  
   const toggleRecording = useCallback(() => {
     if (status === 'recording') {
-        stopRecording();
+      stopRecording();
     } else {
-        startRecording();
+      startRecording();
     }
   }, [status, startRecording, stopRecording]);
 
