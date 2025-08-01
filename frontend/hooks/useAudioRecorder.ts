@@ -1,14 +1,17 @@
 import { useState, useCallback } from 'react';
 import { VoiceRecorder, RecordingData } from 'capacitor-voice-recorder';
 
-type RecordingStatus = 'idle' | 'recording' | 'stopped';
-type AudioResult = {
-  audioUrl: string | null;
-  audioBlob: Blob | null;
+type RecordingStatus = 'idle' | 'recording' | 'recorded' | 'error';
+
+export type AudioResult = {
+  blob: Blob;
+  url: string;
+  mimeType: string;
+  duration: number;
 };
 
 // Helper to convert base64 to Blob
-const base64toBlob = (base64Data: string, contentType: string) => {
+const base64toBlob = (base64Data: string, contentType: string): Blob => {
     const byteCharacters = atob(base64Data);
     const byteArrays = [];
     for (let offset = 0; offset < byteCharacters.length; offset += 512) {
@@ -23,13 +26,15 @@ const base64toBlob = (base64Data: string, contentType: string) => {
     return new Blob(byteArrays, { type: contentType });
 };
 
-export const useAudioRecorder = (onRecordingComplete: (audio: AudioResult) => void) => {
+export const useAudioRecorder = () => {
   const [status, setStatus] = useState<RecordingStatus>('idle');
+  const [audioResult, setAudioResult] = useState<AudioResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const startRecording = useCallback(async () => {
     if (status === 'recording') return;
     setError(null);
+    setAudioResult(null);
 
     try {
       const permission = await VoiceRecorder.requestAudioRecordingPermission();
@@ -56,27 +61,31 @@ export const useAudioRecorder = (onRecordingComplete: (audio: AudioResult) => vo
       if (result.value && result.value.recordDataBase64) {
         const audioBlob = base64toBlob(result.value.recordDataBase64, result.value.mimeType);
         const audioUrl = URL.createObjectURL(audioBlob);
-        onRecordingComplete({ audioUrl, audioBlob });
+        setAudioResult({
+          blob: audioBlob,
+          url: audioUrl,
+          mimeType: result.value.mimeType,
+          duration: result.value.msDuration, // Corrected property
+        });
+        setStatus('recorded');
+      } else {
+        setStatus('idle');
       }
-      setStatus('stopped');
     } catch (err) {
       console.error('Failed to stop recording', err);
       setError('Could not stop recording. Please try again.');
       setStatus('idle');
     }
-  }, [status, onRecordingComplete]);
+  }, [status]);
 
-  const toggleRecording = useCallback(() => {
-    if (status === 'recording') {
-      stopRecording();
-    } else {
-      startRecording();
+  const discardRecording = useCallback(() => {
+    if (audioResult) {
+      URL.revokeObjectURL(audioResult.url);
     }
-  }, [status, startRecording, stopRecording]);
-
-  const clearError = useCallback(() => {
+    setAudioResult(null);
+    setStatus('idle');
     setError(null);
-  }, []);
+  }, [audioResult]);
 
-  return { status, toggleRecording, error, clearError };
+  return { status, startRecording, stopRecording, discardRecording, audioResult, error };
 };

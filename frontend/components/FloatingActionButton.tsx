@@ -3,14 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { useChatStore } from '../contexts/ChatContext';
 import PlusIcon from './icons/PlusIcon';
 
-const FloatingActionButton: React.FC = () => {
+interface FloatingActionButtonProps {
+  activeFilter: {
+    type: 'folder' | 'tag' | null;
+    value: string | null;
+  };
+}
+
+const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ activeFilter }) => {
   const { createChat } = useChatStore();
   const navigate = useNavigate();
 
   const handleNewChat = () => {
-    // A FAB is a global action, so it shouldn't be tied to the current folder.
-    // We pass null to create the chat in the root.
-    const newChat = createChat(null);
+    const folderId = activeFilter.type === 'folder' ? activeFilter.value : null;
+    const newChat = createChat(folderId);
     navigate(`/chat/${newChat.id}`);
   };
 

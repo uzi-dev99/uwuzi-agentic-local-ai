@@ -5,12 +5,19 @@ export enum UserRole {
 
 export type ChatMode = 'agent' | 'chat';
 
+export interface Attachment {
+  name: string;
+  type: 'image' | 'audio' | 'other';
+  url: string;
+}
+
 export interface Message {
   id: string;
   role: UserRole;
   content: string; // Content for display in the UI
   apiContent?: string; // Content to be sent to the API, can differ from display content
   timestamp: string;
+  attachments?: Attachment[];
 }
 
 export interface Chat {
@@ -26,4 +33,11 @@ export interface Chat {
 export interface Folder {
   id: string;
   name: string;
+}
+
+export interface FileData {
+  name: string;
+  type: 'image' | 'audio' | 'text' | 'other';
+  content: string; // Base64 data URL or text content
+  readable: boolean;
 }

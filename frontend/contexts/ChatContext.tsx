@@ -86,12 +86,12 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       id: crypto.randomUUID(),
       title: 'New Conversation',
       messages: [],
-      folderId,
+      folderId: folderId,
       createdAt: new Date().toISOString(),
       tags: [],
       mode: 'chat',
     };
-    setChats(prev => [newChat, ...prev]);
+    setChats(prev => [...prev, newChat]);
     return newChat;
   };
 

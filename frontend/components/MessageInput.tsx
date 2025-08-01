@@ -1,78 +1,76 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import SendIcon from './icons/SendIcon';
 import PaperclipIcon from './icons/PaperclipIcon';
 import MicIcon from './icons/MicIcon';
 import CameraIcon from './icons/CameraIcon';
 import FileIcon from './icons/FileIcon';
-import { useAudioRecorder } from '../hooks/useAudioRecorder';
+import TrashIcon from './icons/TrashIcon';
+import { useAudioRecorder, AudioResult } from '../hooks/useAudioRecorder';
 import { useFileUpload, FileData } from '../hooks/useFileUpload';
-import CameraModal from './CameraModal';
 import { Message } from '../types';
+import AudioPlayer from './AudioPlayer';
 
 interface MessageInputProps {
-  onSendMessage: (message: Omit<Message, 'id' | 'role' | 'timestamp'>, attachments: File[]) => void;
+  onSendMessage: (message: Omit<Message, 'id' | 'role' | 'timestamp'>, attachments: FileData[]) => void;
   isLoading: boolean;
   onStopGenerating: () => void;
 }
 
+const AudioPreview: React.FC<{ audioResult: AudioResult; onDiscard: () => void; onSend: () => void; }> = ({ audioResult, onDiscard, onSend }) => {
+  return (
+    <div className="flex items-center gap-2 bg-primary/50 rounded-full p-2 w-full animate-fade-in">
+      <button onClick={onDiscard} className="p-2 text-muted hover:text-danger rounded-full">
+        <TrashIcon className="w-6 h-6 flex-shrink-0" />
+      </button>
+      
+      <div className="flex-1">
+        <AudioPlayer audioUrl={audioResult.url} />
+      </div>
+
+      <button onClick={onSend} className="p-3 text-white bg-accent-violet rounded-full hover:bg-violet-500">
+        <SendIcon className="w-5 h-5" />
+      </button>
+    </div>
+  );
+};
+
 const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading, onStopGenerating }) => {
   const [text, setText] = useState('');
-  const [isCameraOpen, setCameraOpen] = useState(false);
-  const [attachment, setAttachment] = useState<{ data: FileData; file: File } | null>(null);
+  const [attachments, setAttachments] = useState<FileData[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleAudioComplete = useCallback((result: { audioUrl: string | null; audioBlob: Blob | null }) => {
-    if(result.audioUrl) {
-        onSendMessage({ content: `(Voice message was recorded, but audio sending is not implemented yet.)` }, []);
-    }
-  }, [onSendMessage]);
+  const { 
+    status: recordingStatus, 
+    startRecording, 
+    stopRecording, 
+    discardRecording, 
+    audioResult, 
+    error: audioError 
+  } = useAudioRecorder();
 
-  const { status: recordingStatus, toggleRecording, error: audioError, clearError: clearAudioError } = useAudioRecorder(handleAudioComplete);
-
-    const handleFileSelect = (fileData: FileData, file: File) => {
-    setAttachment({ data: fileData, file });
-  };
-
-  const handlePhotoCapture = (dataUrl: string) => {
-    // Esto es para la cámara, que ya envía un data URL. No hay un objeto File aquí.
-    // La lógica del backend deberá poder manejar un base64 directamente en el contenido.
-    // Por ahora, lo dejamos así, ya que el plan se centra en la carga de archivos.
-    onSendMessage({ content: dataUrl, apiContent: dataUrl }, []);
-    setCameraOpen(false);
-  }
-  
-  const { handleFileChange } = useFileUpload(handleFileSelect);
+  const { handleFileChange } = useFileUpload((fileData) => {
+    setAttachments(prev => [...prev, fileData]);
+  });
 
   const handleSend = () => {
-    if ((!text.trim() && !attachment) || isLoading) return;
+    const allAttachments = attachments;
+    if ((!text.trim() && allAttachments.length === 0) || isLoading) return;
 
-    let messageToSend: Omit<Message, 'id' | 'role' | 'timestamp'>;
-
-    if (attachment) {
-      if (attachment.data.type === 'image') {
-        // For images, the content itself is the data URL. Text is ignored when sending an image this way.
-        messageToSend = { content: attachment.data.content, apiContent: attachment.data.content };
-      } else {
-        const displayContent = `(File Attached: ${attachment.data.name})\n${text.trim()}`.trim();
-        let apiContent: string;
-        if (attachment.data.readable) {
-          apiContent = `Attached file "${attachment.data.name}":\n\n${attachment.data.content}\n\n---\n\n${text.trim()}`.trim();
-        } else {
-          apiContent = `(Se adjuntó un archivo no legible: ${attachment.data.name})\n\n${text.trim()}`.trim();
-        }
-        messageToSend = { content: displayContent, apiContent };
-      }
-    } else {
-      messageToSend = { content: text.trim(), apiContent: text.trim() };
-    }
+    const messageContent = text.trim();
     
-        if (messageToSend.content) {
-      onSendMessage(messageToSend, attachment ? [attachment.file] : []);
+    const messageToSend: Omit<Message, 'id' | 'role' | 'timestamp'> = { 
+      content: messageContent, 
+      apiContent: messageContent 
+    };
+    
+    if (messageToSend.content || allAttachments.length > 0) {
+      onSendMessage(messageToSend, allAttachments);
     }
 
     setText('');
-    setAttachment(null);
+    setAttachments([]);
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
@@ -86,51 +84,83 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading, o
   };
   
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (audioError) clearAudioError();
+    if (audioError) discardRecording();
     setText(e.target.value);
     e.target.style.height = 'auto';
     e.target.style.height = `${e.target.scrollHeight}px`;
   };
 
   const handleAttachmentClick = () => {
-    if (audioError) clearAudioError();
+    if (audioError) discardRecording();
     fileInputRef.current?.click();
   }
   
-  const handleCameraClick = () => {
-    if (audioError) clearAudioError();
-    setCameraOpen(true);
-  }
+  const handleCameraClick = async () => {
+    if (audioError) discardRecording();
+    try {
+      const image = await Camera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.Base64,
+        source: CameraSource.Camera,
+      });
+
+      if (image.base64String) {
+        const content = `data:image/jpeg;base64,${image.base64String}`;
+        const fileData: FileData = { name: `photo-${Date.now()}.jpg`, type: 'image', content, readable: false };
+        setAttachments(prev => [...prev, fileData]);
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message === 'User cancelled photos app') {
+        return; // Do nothing if user cancels
+      }
+      console.error('Camera error:', error);
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
 
   return (
     <>
-      {isCameraOpen && <CameraModal onCapture={handlePhotoCapture} onClose={() => setCameraOpen(false)} />}
       <div className="flex-shrink-0 p-2 md:p-4 bg-primary border-t border-secondary min-w-0 w-full max-w-full">
         {audioError && (
           <div className="bg-danger/20 border border-danger/50 text-red-300 text-sm p-3 rounded-lg mb-2 flex justify-between items-center" role="alert">
             <span>{audioError}</span>
-            <button onClick={clearAudioError} className="font-bold text-lg leading-none p-1 hover:text-red-100" aria-label="Dismiss error">&times;</button>
+            <button onClick={() => discardRecording()} className="font-bold text-lg leading-none p-1 hover:text-red-100" aria-label="Dismiss error">&times;</button>
           </div>
         )}
 
-        {attachment && (
-            <div className="bg-secondary p-2 rounded-lg mb-2 flex justify-between items-center animate-fade-in-up">
-                <div className="flex items-center gap-2 min-w-0">
-                    {attachment.data.type === 'image' 
-                        ? <img src={attachment.data.content} className="w-8 h-8 rounded object-cover" />
-                        : <FileIcon className="w-5 h-5 text-muted flex-shrink-0"/>
-                    }
-                    <span className="text-sm text-light truncate">{attachment.data.name}</span>
-                </div>
-                <button onClick={() => setAttachment(null)} className="font-bold text-lg leading-none p-1 text-muted hover:text-light" aria-label="Remove attachment">&times;</button>
-            </div>
+        {attachments.length > 0 && (
+          <div className="p-2 mb-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+            {attachments.map((att, index) => (
+              <div key={index} className="relative group aspect-square bg-secondary rounded-lg animate-fade-in-up">
+                {att.type === 'image' ? (
+                  <img src={att.content} className="w-full h-full object-cover rounded-lg" />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-muted p-2">
+                    <FileIcon className="w-8 h-8"/>
+                    <span className="text-xs text-center truncate w-full mt-1">{att.name}</span>
+                  </div>
+                )}
+                <button 
+                  onClick={() => removeAttachment(index)} 
+                  className="absolute -top-1 -right-1 bg-danger text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Remove attachment"
+                >
+                  &times;
+                </button>
+              </div>
+            ))}
+          </div>
         )}
 
-        <div className="flex items-end gap-2 bg-secondary rounded-xl p-2 min-w-0 w-full max-w-full">
+        <div className="flex items-center gap-2 bg-secondary rounded-xl p-2 min-w-0 w-full max-w-full">
           <button
               onClick={handleCameraClick}
               className="p-2 text-muted hover:text-accent-violet rounded-full hover:bg-primary disabled:opacity-50"
-              disabled={isLoading || !!attachment}
+              disabled={isLoading}
               aria-label="Take photo"
           >
             <CameraIcon className="w-6 h-6" />
@@ -138,7 +168,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading, o
           <button
               onClick={handleAttachmentClick}
               className="p-2 text-muted hover:text-accent-violet rounded-full hover:bg-primary disabled:opacity-50"
-              disabled={isLoading || !!attachment}
+              disabled={isLoading}
               aria-label="Attach file"
           >
             <PaperclipIcon className="w-6 h-6" />
@@ -149,48 +179,78 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading, o
               onChange={handleFileChange}
               className="hidden"
               accept="image/*,text/plain,text/markdown,.pdf,.txt,.md"
+              multiple
           />
 
-          <textarea
-            ref={textareaRef}
-            value={text}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            placeholder="Type a message..."
-            rows={1}
-            className="flex-1 bg-transparent text-light placeholder-muted focus:outline-none resize-none max-h-48 py-2 min-w-0"
-            disabled={isLoading}
-          />
-          
-          <button 
-              onClick={toggleRecording} 
-              className={`p-2 rounded-full hover:bg-primary disabled:opacity-50 ${recordingStatus === 'recording' ? 'text-accent-violet animate-pulse' : 'text-muted hover:text-accent-violet'}`}
-              disabled={isLoading || !!attachment}
-              aria-label={recordingStatus === 'recording' ? 'Stop recording' : 'Start recording'}
-          >
-            <MicIcon className="w-6 h-6" />
-          </button>
-
-          {isLoading ? (
-            <button
-              onClick={onStopGenerating}
-              className="bg-danger text-white p-2 rounded-full hover:bg-red-500"
-              aria-label="Stop generating"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10h6v4H9z" />
-              </svg>
-            </button>
+          {recordingStatus === 'recorded' && audioResult ? (
+            <AudioPreview 
+              audioResult={audioResult} 
+              onDiscard={discardRecording} 
+              onSend={() => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                  const fileData: FileData = { 
+                    name: `voice-message-${Date.now()}.webm`, 
+                    type: 'audio', 
+                    content: e.target?.result as string, 
+                    readable: false 
+                  };
+                  const allAttachments = [...attachments, fileData];
+                  const messageToSend: Omit<Message, 'id' | 'role' | 'timestamp'> = {
+                    content: text.trim(),
+                  };
+                  onSendMessage(messageToSend, allAttachments);
+                  setText('');
+                  setAttachments([]);
+                  discardRecording();
+                };
+                reader.readAsDataURL(audioResult.blob);
+              }}
+            />
           ) : (
-            <button
-              onClick={handleSend}
-              disabled={!text.trim() && !attachment}
-              className="bg-accent-violet text-white p-2 rounded-full hover:bg-violet-500 disabled:bg-muted disabled:cursor-not-allowed"
-              aria-label="Send message"
-            >
-              <SendIcon className="w-6 h-6" />
-            </button>
+            <>
+              <textarea
+                ref={textareaRef}
+                value={text}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                placeholder="Type a message..."
+                rows={1}
+                className="flex-1 bg-transparent text-light placeholder-muted focus:outline-none resize-none max-h-48 py-2 min-w-0"
+                disabled={isLoading || recordingStatus === 'recording'}
+              />
+              
+              {isLoading ? (
+                <button
+                  onClick={onStopGenerating}
+                  className="bg-danger text-white p-2 rounded-full hover:bg-red-500 animate-fade-in"
+                  aria-label="Stop generating"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10h6v4H9z" />
+                  </svg>
+                </button>
+              ) : text.trim() || attachments.length > 0 ? (
+                <button
+                  onClick={handleSend}
+                  className="bg-accent-violet text-white p-2 rounded-full hover:bg-violet-500 disabled:opacity-50 disabled:hover:bg-accent-violet animate-fade-in"
+                  disabled={isLoading}
+                  aria-label="Send message"
+                >
+                  <SendIcon className="w-6 h-6" />
+                </button>
+              ) : (
+                <button 
+                    onClick={recordingStatus === 'recording' ? stopRecording : startRecording} 
+                    className={`p-2 rounded-full hover:bg-primary disabled:opacity-50 animate-fade-in ${recordingStatus === 'recording' ? 'text-accent-violet recording-animation' : 'text-muted hover:text-accent-violet'}`}
+                    disabled={isLoading || attachments.length > 0}
+                    aria-label={recordingStatus === 'recording' ? 'Stop recording' : 'Start recording'}
+                >
+                  <MicIcon className="w-6 h-6" />
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>

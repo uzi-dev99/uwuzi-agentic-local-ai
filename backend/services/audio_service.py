@@ -30,7 +30,7 @@ async def transcribe_audio(file: UploadFile) -> str:
     try:
         async with httpx.AsyncClient() as client:
             files = {'file': (file.filename, await file.read(), file.content_type)}
-            response = await client.post(WHISper_API_URL, files=files, timeout=30.0)
+            response = await client.post(WHISPER_API_URL, files=files, timeout=30.0)
 
             response.raise_for_status()  # Lanza una excepción para códigos de error HTTP (4xx o 5xx)
 

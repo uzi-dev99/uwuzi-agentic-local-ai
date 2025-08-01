@@ -3,11 +3,11 @@ import React, { useState, useCallback } from 'react';
 export interface FileData {
     name: string;
     content: string;
-    type: 'image' | 'text' | 'other';
+    type: 'image' | 'text' | 'audio' | 'other';
     readable: boolean;
 }
 
-export const useFileUpload = (onFileSelect: (fileData: FileData, file: File) => void) => {
+export const useFileUpload = (onFileSelect: (fileData: FileData) => void) => {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,6 +33,8 @@ export const useFileUpload = (onFileSelect: (fileData: FileData, file: File) => 
         
         if (file.type.startsWith('image/')) {
             fileData = { name: file.name, content: result, type: 'image', readable: true };
+        } else if (file.type.startsWith('audio/')) {
+            fileData = { name: file.name, content: result, type: 'audio', readable: false }; // Audio content is a data URL, not human-readable text
         } else if (isTextFile) {
             fileData = { name: file.name, content: result, type: 'text', readable: true };
         } else {
@@ -40,7 +42,7 @@ export const useFileUpload = (onFileSelect: (fileData: FileData, file: File) => 
             fileData = { name: file.name, content: file.name, type: 'other', readable: false };
         }
         
-        onFileSelect(fileData, file);
+        onFileSelect(fileData);
         setIsUploading(false);
     };
 
@@ -51,13 +53,13 @@ export const useFileUpload = (onFileSelect: (fileData: FileData, file: File) => 
     
     const isTextFile = file.type === 'text/plain' || file.type === 'text/markdown' || file.name.endsWith('.md') || file.name.endsWith('.txt');
 
-    if (file.type.startsWith('image/')) {
+    if (file.type.startsWith('image/') || file.type.startsWith('audio/')) {
       reader.readAsDataURL(file);
     } else if (isTextFile) {
       reader.readAsText(file);
     } else {
       // For unreadable files, we trigger onload directly without reading the content
-      onFileSelect({ name: file.name, content: file.name, type: 'other', readable: false }, file);
+      onFileSelect({ name: file.name, content: file.name, type: 'other', readable: false });
       setIsUploading(false);
     }
 

@@ -42,7 +42,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
                     : 'bg-secondary text-light'
                 }`}
             >
-                <MessageContent content={message.content} />
+                <MessageContent message={message} />
             </div>
             </div>
         );

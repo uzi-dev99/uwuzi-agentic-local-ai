@@ -1,11 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useChatStore } from '../contexts/ChatContext';
-import { UserRole, Message as MessageType, ChatMode } from '../types';
+import { UserRole, Message as MessageType, ChatMode, Attachment, FileData } from '../types';
 import ChatHeader from '../components/ChatHeader';
 import MessageList from '../components/MessageList';
 import MessageInput from '../components/MessageInput';
 import { invokeDirectChat } from '../services/backendService';
+
+// Helper function to convert Base64 Data URL to File object
+function dataURLtoFile(dataurl: string, filename: string): File | null {
+  const arr = dataurl.split(',');
+  if (arr.length < 2) { return null; }
+  const mimeMatch = arr[0].match(/:(.*?);/);
+  if (!mimeMatch || mimeMatch.length < 2) { return null; }
+  const mime = mimeMatch[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, { type: mime });
+}
 
 export const ChatPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -38,13 +54,20 @@ export const ChatPage: React.FC = () => {
     }
   };
 
-  const handleSendMessage = async (message: Omit<MessageType, 'id' | 'role' | 'timestamp'>, attachments: File[]) => {
+  const handleSendMessage = async (message: Omit<MessageType, 'id' | 'role' | 'timestamp'>, attachments: FileData[]) => {
     if (!id || !chat) return;
 
-    
+    const messageAttachmentsForState: Attachment[] = attachments.map(fileData => {
+      const attachmentType: Attachment['type'] = fileData.type === 'text' ? 'other' : fileData.type;
+      return {
+        name: fileData.name,
+        type: attachmentType,
+        url: fileData.content, // Base64 data URL for preview
+      };
+    });
 
     // Add user message to state
-    addMessage(id, { role: UserRole.USER, ...message });
+    addMessage(id, { role: UserRole.USER, ...message, attachments: messageAttachmentsForState });
     
     // Immediately add placeholder for assistant's response
     const assistantMessageId = addMessage(id, { role: UserRole.ASSISTANT, content: '' });
@@ -70,10 +93,15 @@ export const ChatPage: React.FC = () => {
     const controller = new AbortController();
     setAbortController(controller);
 
+    // Convert FileData to File objects for the backend
+    const filesForBackend: File[] = attachments
+      .map(fileData => dataURLtoFile(fileData.content, fileData.name))
+      .filter((file): file is File => file !== null);
+
     try {
       await invokeDirectChat(
         currentHistory,
-        attachments,
+        filesForBackend, // Pass File[] to the backend
         (chunk: string) => {
           updateAssistantMessage(id, assistantMessageId, chunk);
         },

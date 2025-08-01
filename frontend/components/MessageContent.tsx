@@ -3,91 +3,100 @@ import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import FileIcon from './icons/FileIcon';
+import { Attachment, Message as MessageType } from '../types';
+import AudioPlayer from './AudioPlayer'; // Import the new component
 
 interface MessageContentProps {
-  content: string;
+  message: MessageType;
 }
 
-const isImageDataUrl = (content: string) => content.startsWith('data:image');
-const fileAttachmentRegex = /^\(File Attached: (.*?)\)\n*(.*)$/s;
+const AudioAttachment: React.FC<{ attachment: Attachment }> = ({ attachment }) => {
+  return <AudioPlayer audioUrl={attachment.url} />;
+};
 
-const MessageContent: React.FC<MessageContentProps> = ({ content }) => {
-  if (isImageDataUrl(content)) {
+const renderAttachment = (attachment: Attachment) => {
+  if (attachment.type === 'image') {
     return (
-      <div className="p-2">
+      <div key={attachment.name} className="p-2">
         <img
-          src={content}
-          alt="User upload"
+          src={attachment.url}
+          alt={attachment.name}
           className="max-w-xs max-h-64 rounded-lg object-contain"
         />
       </div>
     );
+  } else if (attachment.type === 'audio') {
+    return <AudioAttachment key={attachment.name} attachment={attachment} />;
   }
-  
-  const fileAttachmentMatch = content.match(fileAttachmentRegex);
-  if (fileAttachmentMatch) {
-      const [, fileName, restOfMessage] = fileAttachmentMatch;
-
-      return (
-        <div className="text-light space-y-2">
-          <div className="bg-primary/50 p-3 rounded-lg flex items-center gap-3">
-              <FileIcon className="w-6 h-6 text-muted flex-shrink-0"/>
-              <span className="font-mono text-sm truncate">{fileName}</span>
-          </div>
-          {restOfMessage && (
-            <div className="prose prose-invert prose-sm text-light">
-               <ReactMarkdown>{restOfMessage}</ReactMarkdown>
-            </div>
-          )}
-        </div>
-      );
-  }
-
   return (
-    <div
-      className={`prose prose-invert prose-sm text-light`}
+    <a
+      href={attachment.url}
+      download={attachment.name}
+      key={attachment.name}
+      className="bg-primary/50 p-3 rounded-lg flex items-center gap-3"
     >
-      <ReactMarkdown
-        components={{
-          code({ node, className, children, ...props }) {
-            const match = /language-(\w+)/.exec(className || '');
-            return match ? (
-              <div className="overflow-x-auto max-w-full w-full min-w-0">
-                <SyntaxHighlighter
-                    style={atomDark as any}
-                    language={match[1]}
-                    PreTag="div"
-                    customStyle={{
-                      margin: 0,
-                      padding: '12px',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      lineHeight: '1.4',
-                      maxWidth: '100%',
-                      whiteSpace: 'pre',
-                      wordBreak: 'normal',
-                    }}
-                    codeTagProps={{
-                      style: {
-                        whiteSpace: 'pre',
-                        wordBreak: 'normal',
-                        display: 'block',
-                      },
-                    }}
-                  >
-                    {String(children).replace(/\n$/, '')}
-                  </SyntaxHighlighter>
-              </div>
-            ) : (
-              <code className="bg-secondary text-accent-violet px-1.5 py-1 rounded-md" {...props}>
-                {children}
-              </code>
-            );
-          },
-        }}
-      >
-        {content}
-      </ReactMarkdown>
+      <FileIcon className="w-6 h-6 text-muted flex-shrink-0" />
+      <span className="font-mono text-sm truncate">{attachment.name}</span>
+    </a>
+  );
+};
+
+const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
+  const { content, attachments } = message;
+  return (
+    <div className="space-y-2">
+      {attachments && attachments.length > 0 && (
+        <div className="flex flex-wrap items-start gap-2">
+          {attachments.map(renderAttachment)}
+        </div>
+      )}
+      {content && (
+        <div
+          className={`prose prose-invert prose-sm text-light`}
+        >
+          <ReactMarkdown
+            components={{
+              code({ node, className, children, ...props }) {
+                const match = /language-(\w+)/.exec(className || '');
+                return match ? (
+                  <div className="overflow-x-auto max-w-full w-full min-w-0">
+                    <SyntaxHighlighter
+                        style={atomDark as any}
+                        language={match[1]}
+                        PreTag="div"
+                        customStyle={{
+                          margin: 0,
+                          padding: '12px',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          lineHeight: '1.4',
+                          maxWidth: '100%',
+                          whiteSpace: 'pre',
+                          wordBreak: 'normal',
+                        }}
+                        codeTagProps={{
+                          style: {
+                            whiteSpace: 'pre',
+                            wordBreak: 'normal',
+                            display: 'block',
+                          },
+                        }}
+                      >
+                        {String(children).replace(/\n$/, '')}
+                      </SyntaxHighlighter>
+                  </div>
+                ) : (
+                  <code className="bg-secondary text-accent-violet px-1.5 py-1 rounded-md" {...props}>
+                    {children}
+                  </code>
+                );
+              },
+            }}
+          >
+            {content}
+          </ReactMarkdown>
+        </div>
+      )}
     </div>
   );
 };

@@ -45,7 +45,7 @@ const HomePage: React.FC<HomePageProps> = ({ activeFilter }) => {
       <div className="flex-1 overflow-y-auto min-h-0">
         <ChatList activeFilter={activeFilter} />
       </div>
-      <FloatingActionButton />
+      <FloatingActionButton activeFilter={activeFilter} />
     </div>
   );
 };
