@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { HashRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { App as CapacitorApp } from '@capacitor/app';
-import { StatusBar, Style } from '@capacitor/status-bar';
+import { StatusBar } from '@capacitor/status-bar';
+
 import { SidebarProvider } from './contexts/SidebarContext';
 import { ChatProvider } from './contexts/ChatContext';
 import HomePage from './pages/HomePage';
@@ -15,6 +16,18 @@ const AppContent: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const backPressCount = useRef(0);
+
+  useEffect(() => {
+    const setFullScreen = async () => {
+      try {
+        await StatusBar.hide();
+      } catch (error) {
+        console.log('StatusBar plugin not available, running in web.');
+      }
+    };
+
+    setFullScreen();
+  }, []);
 
   useEffect(() => {
     const handleBackButton = () => {
@@ -64,9 +77,9 @@ const AppContent: React.FC = () => {
   }, [location, navigate]);
 
   return (
-    <div className="dark bg-primary text-light font-sans antialiased h-screen w-screen flex overflow-hidden overflow-x-hidden">
+    <div className="dark bg-primary text-light font-sans antialiased h-screen w-screen flex">
       <Sidebar activeFilter={activeFilter} setActiveFilter={setActiveFilter} />
-      <main className="flex-1 flex flex-col h-full relative overflow-x-hidden">
+      <main className="flex-1 flex flex-col relative min-w-0 overflow-hidden">
         <Routes>
           <Route path="/" element={<HomePage activeFilter={activeFilter} />} />
           <Route path="/chat/:id" element={<ChatPage />} />

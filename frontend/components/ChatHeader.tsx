@@ -41,8 +41,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ chat, onUpdateMode, onAddTag, o
   };
 
   return (
-    <header className="flex-shrink-0 bg-primary/80 backdrop-blur-sm p-4 border-b border-secondary">
-      <div className="flex items-center justify-between">
+    <header className="flex-shrink-0 bg-primary/80 backdrop-blur-sm p-4 border-b border-secondary min-w-0">
+      <div className="flex items-center justify-between min-w-0">
         <div className="flex items-center min-w-0 group">
           <Link to="/" className="p-2 rounded-md hover:bg-secondary mr-2 flex-shrink-0">
             <BackIcon className="h-6 w-6 text-light" />
@@ -54,7 +54,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ chat, onUpdateMode, onAddTag, o
                     value={titleValue}
                     onChange={(e) => setTitleValue(e.target.value)}
                     onBlur={() => handleTitleSubmit(new Event('submit') as any)}
-                    className="text-lg font-semibold text-light bg-secondary px-2 py-1 rounded-md w-full border border-accent-violet focus:ring-1 focus:ring-accent-violet"
+                    className="text-lg font-semibold text-light bg-secondary px-2 py-1 rounded-md w-full border border-accent-violet focus:ring-1 focus:ring-accent-violet min-w-0"
                     autoFocus
                 />
             </form>

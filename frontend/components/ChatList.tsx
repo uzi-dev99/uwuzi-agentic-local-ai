@@ -55,7 +55,7 @@ const ChatList: React.FC<ChatListProps> = ({ activeFilter }) => {
   }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   return (
-    <div className="flex-1 overflow-y-auto bg-primary">
+    <div className="flex-1 overflow-y-auto bg-primary min-w-0 overflow-x-hidden">
       {filteredChats.length > 0 ? (
         <ul className="divide-y divide-secondary">
           {filteredChats.map(chat => (

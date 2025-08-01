@@ -105,7 +105,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading, o
   return (
     <>
       {isCameraOpen && <CameraModal onCapture={handlePhotoCapture} onClose={() => setCameraOpen(false)} />}
-      <div className="flex-shrink-0 p-2 md:p-4 bg-primary border-t border-secondary">
+      <div className="flex-shrink-0 p-2 md:p-4 bg-primary border-t border-secondary min-w-0 w-full max-w-full">
         {audioError && (
           <div className="bg-danger/20 border border-danger/50 text-red-300 text-sm p-3 rounded-lg mb-2 flex justify-between items-center" role="alert">
             <span>{audioError}</span>
@@ -126,7 +126,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading, o
             </div>
         )}
 
-        <div className="flex items-end gap-2 bg-secondary rounded-xl p-2">
+        <div className="flex items-end gap-2 bg-secondary rounded-xl p-2 min-w-0 w-full max-w-full">
           <button
               onClick={handleCameraClick}
               className="p-2 text-muted hover:text-accent-violet rounded-full hover:bg-primary disabled:opacity-50"
@@ -158,7 +158,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading, o
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
             rows={1}
-            className="flex-1 bg-transparent text-light placeholder-muted focus:outline-none resize-none max-h-48 py-2"
+            className="flex-1 bg-transparent text-light placeholder-muted focus:outline-none resize-none max-h-48 py-2 min-w-0"
             disabled={isLoading}
           />
           

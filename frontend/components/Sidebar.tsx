@@ -44,7 +44,7 @@ const Sidebar: React.FC<{
         onClick={closeSidebar}
       />
       <aside
-        className={`absolute md:relative flex flex-col bg-primary w-64 md:w-72 h-full z-40 transform transition-transform ${
+        className={`fixed md:relative flex flex-col bg-primary w-64 max-w-[85vw] md:w-72 h-full z-40 transform transition-transform duration-300 ease-in-out ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } md:translate-x-0 flex-shrink-0 border-r border-secondary`}
       >

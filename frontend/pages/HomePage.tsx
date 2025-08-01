@@ -40,9 +40,11 @@ const HomePage: React.FC<HomePageProps> = ({ activeFilter }) => {
   }
 
   return (
-    <div {...bind()} className="h-full w-full flex flex-col bg-primary relative touch-pan-y">
+    <div {...bind()} className="flex flex-col h-full w-full bg-primary relative touch-pan-y">
       <HomeHeader title={title} />
-      <ChatList activeFilter={activeFilter} />
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <ChatList activeFilter={activeFilter} />
+      </div>
       <FloatingActionButton />
     </div>
   );

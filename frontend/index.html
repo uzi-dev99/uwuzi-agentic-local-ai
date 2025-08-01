@@ -47,6 +47,55 @@
         scrollbar-width: thin;
         scrollbar-color: #6B7281 #111827; /* thumb color track color */
       }
+      
+      /* Mobile-specific optimizations for Android */
+      @media screen and (max-width: 768px) {
+        html, body {
+          overflow-x: hidden !important;
+          width: 100% !important;
+          max-width: 100vw !important;
+          position: relative;
+        }
+        
+        /* Prevent horizontal scroll on all elements */
+        * {
+          max-width: 100% !important;
+          box-sizing: border-box !important;
+        }
+        
+        /* Force proper container behavior */
+        #root {
+          width: 100% !important;
+          max-width: 100vw !important;
+          overflow-x: hidden !important;
+        }
+        
+        /* Ensure proper viewport handling with virtual keyboard */
+        @supports (-webkit-touch-callout: none) {
+          .ios-keyboard-fix {
+            height: 100vh;
+            height: -webkit-fill-available;
+          }
+        }
+        
+        /* Android-specific fixes */
+        @media screen and (max-width: 768px) and (orientation: portrait) {
+          body {
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+          }
+        }
+        
+        /* Fix for flex containers */
+        .flex {
+          min-width: 0 !important;
+        }
+        
+        /* Ensure text areas and inputs don't overflow */
+        textarea, input {
+          max-width: 100% !important;
+        }
+      }
     </style>
   <script type="importmap">
 {

@@ -52,31 +52,32 @@ const MessageContent: React.FC<MessageContentProps> = ({ content }) => {
           code({ node, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
             return match ? (
-              <SyntaxHighlighter
-                  style={atomDark as any}
-                  language={match[1]}
-                  PreTag="div"
-                  customStyle={{
-                    margin: 0,
-                    padding: '12px',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    lineHeight: '1.4',
-                    overflowX: 'auto',
-                    maxWidth: '100%',
-                    whiteSpace: 'pre',
-                    wordBreak: 'normal',
-                  }}
-                  codeTagProps={{
-                    style: {
+              <div className="overflow-x-auto max-w-full w-full min-w-0">
+                <SyntaxHighlighter
+                    style={atomDark as any}
+                    language={match[1]}
+                    PreTag="div"
+                    customStyle={{
+                      margin: 0,
+                      padding: '12px',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      lineHeight: '1.4',
+                      maxWidth: '100%',
                       whiteSpace: 'pre',
                       wordBreak: 'normal',
-                      display: 'block',
-                    },
-                  }}
-                >
-                  {String(children).replace(/\n$/, '')}
-                </SyntaxHighlighter>
+                    }}
+                    codeTagProps={{
+                      style: {
+                        whiteSpace: 'pre',
+                        wordBreak: 'normal',
+                        display: 'block',
+                      },
+                    }}
+                  >
+                    {String(children).replace(/\n$/, '')}
+                  </SyntaxHighlighter>
+              </div>
             ) : (
               <code className="bg-secondary text-accent-violet px-1.5 py-1 rounded-md" {...props}>
                 {children}
