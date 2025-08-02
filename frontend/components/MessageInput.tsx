@@ -28,7 +28,7 @@ const AudioPreview: React.FC<{ audioResult: AudioResult; onDiscard: () => void; 
         <AudioPlayer audioUrl={audioResult.url} />
       </div>
 
-      <button onClick={onSend} className="p-3 text-white bg-accent-violet rounded-full hover:bg-violet-500">
+      <button onClick={onSend} className="p-3 text-white bg-accent rounded-full hover:bg-accent-dark">
         <SendIcon className="w-5 h-5" />
       </button>
     </div>
@@ -159,7 +159,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading, o
         <div className="flex items-center gap-2 bg-secondary rounded-xl p-2 min-w-0 w-full max-w-full">
           <button
               onClick={handleCameraClick}
-              className="p-2 text-muted hover:text-accent-violet rounded-full hover:bg-primary disabled:opacity-50"
+              className="p-2 text-muted hover:text-accent rounded-full hover:bg-primary disabled:opacity-50"
               disabled={isLoading}
               aria-label="Take photo"
           >
@@ -167,7 +167,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading, o
           </button>
           <button
               onClick={handleAttachmentClick}
-              className="p-2 text-muted hover:text-accent-violet rounded-full hover:bg-primary disabled:opacity-50"
+              className="p-2 text-muted hover:text-accent rounded-full hover:bg-primary disabled:opacity-50"
               disabled={isLoading}
               aria-label="Attach file"
           >
@@ -234,7 +234,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading, o
               ) : text.trim() || attachments.length > 0 ? (
                 <button
                   onClick={handleSend}
-                  className="bg-accent-violet text-white p-2 rounded-full hover:bg-violet-500 disabled:opacity-50 disabled:hover:bg-accent-violet animate-fade-in"
+                  className="bg-accent text-white p-2 rounded-full hover:bg-accent-dark disabled:opacity-50 disabled:hover:bg-accent animate-fade-in"
                   disabled={isLoading}
                   aria-label="Send message"
                 >
@@ -243,7 +243,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading, o
               ) : (
                 <button 
                     onClick={recordingStatus === 'recording' ? stopRecording : startRecording} 
-                    className={`p-2 rounded-full hover:bg-primary disabled:opacity-50 animate-fade-in ${recordingStatus === 'recording' ? 'text-accent-violet recording-animation' : 'text-muted hover:text-accent-violet'}`}
+                    className={`p-2 rounded-full hover:bg-primary disabled:opacity-50 animate-fade-in ${recordingStatus === 'recording' ? 'text-accent recording-animation' : 'text-muted hover:text-accent'}`}
                     disabled={isLoading || attachments.length > 0}
                     aria-label={recordingStatus === 'recording' ? 'Stop recording' : 'Start recording'}
                 >

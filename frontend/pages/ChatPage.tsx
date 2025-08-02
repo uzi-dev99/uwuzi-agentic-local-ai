@@ -6,6 +6,22 @@ import ChatHeader from '../components/ChatHeader';
 import MessageList from '../components/MessageList';
 import MessageInput from '../components/MessageInput';
 import { invokeDirectChat } from '../services/backendService';
+import AnimatedPage from '../components/AnimatedPage';
+
+const chatPageVariants = {
+  initial: {
+    opacity: 0,
+    x: '100vw',
+  },
+  in: {
+    opacity: 1,
+    x: 0,
+  },
+  out: {
+    opacity: 0,
+    x: '100vw',
+  },
+};
 
 // Helper function to convert Base64 Data URL to File object
 function dataURLtoFile(dataurl: string, filename: string): File | null {
@@ -131,14 +147,14 @@ export const ChatPage: React.FC = () => {
 
   if (!chat) {
     return (
-        <div className="flex items-center justify-center h-full text-muted">
+        <AnimatedPage className="flex items-center justify-center h-full text-muted">
             Loading chat...
-        </div>
+        </AnimatedPage>
     );
   }
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <AnimatedPage className="flex flex-col h-full w-full" variants={chatPageVariants}>
       <ChatHeader 
         chat={chat} 
         onUpdateMode={(mode: ChatMode) => updateChatMode(chat.id, mode)}
@@ -150,7 +166,7 @@ export const ChatPage: React.FC = () => {
         <MessageList messages={chat.messages} />
       </div>
       <MessageInput onSendMessage={handleSendMessage} isLoading={isLoading} onStopGenerating={handleStopGenerating} />
-    </div>
+    </AnimatedPage>
   );
 };
 

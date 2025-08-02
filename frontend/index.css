@@ -27,16 +27,40 @@
 @keyframes pulsing-glow {
   0% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(138, 92, 245, 0.7);
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7);
   }
   70% {
     transform: scale(1.1);
-    box-shadow: 0 0 10px 10px rgba(138, 92, 245, 0);
+    box-shadow: 0 0 10px 10px rgba(52, 211, 153, 0);
   }
   100% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(138, 92, 245, 0);
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
   }
+}
+
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E5E7EB' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 1.2em;
+  padding-right: 2rem; /* Adjust as needed */
+}
+
+select:focus {
+  outline: none;
+  border-color: #34D399; /* accent color */
+  box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.5); /* accent-dark with opacity */
+}
+
+/* Styling options is notoriously difficult and inconsistent across browsers. */
+/* We will rely on the focus state of the select element itself for visual feedback. */
+select option {
+    background-color: #1F2937; /* secondary color */
+    color: #E5E7EB; /* light color */
 }
 
 .recording-animation {

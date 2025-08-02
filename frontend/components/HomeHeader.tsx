@@ -18,7 +18,7 @@ const HomeHeader: React.FC<HomeHeaderProps> = ({ title }) => {
         </button>
         <h1 className="text-xl font-bold text-light truncate">{title}</h1>
       </div>
-       <Link to="/config" className="text-xs text-muted hover:text-accent-green">Settings</Link>
+       <Link to="/config" className="text-xs text-muted hover:text-accent">Settings</Link>
     </header>
   );
 };

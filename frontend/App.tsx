@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { HashRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import { App as CapacitorApp } from '@capacitor/app';
 import { StatusBar } from '@capacitor/status-bar';
 
@@ -10,6 +11,7 @@ import HomePage from './pages/HomePage';
 import ChatPage from './pages/ChatPage';
 import ConfigPage from './pages/ConfigPage';
 import Sidebar from './components/Sidebar';
+import FloatingActionButton from './components/FloatingActionButton';
 
 const AppContent: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<{ type: 'folder' | 'tag' | null; value: string | null }>({ type: null, value: null });
@@ -76,15 +78,22 @@ const AppContent: React.FC = () => {
     };
   }, [location, navigate]);
 
+
+
   return (
     <div className="dark bg-primary text-light font-sans antialiased h-screen w-screen flex">
       <Sidebar activeFilter={activeFilter} setActiveFilter={setActiveFilter} />
       <main className="flex-1 flex flex-col relative min-w-0 overflow-hidden">
-        <Routes>
-          <Route path="/" element={<HomePage activeFilter={activeFilter} />} />
-          <Route path="/chat/:id" element={<ChatPage />} />
-          <Route path="/config" element={<ConfigPage />} />
-        </Routes>
+        <AnimatePresence mode='wait'>
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<HomePage activeFilter={activeFilter} />} />
+            <Route path="/chat/:id" element={<ChatPage />} />
+            <Route path="/config" element={<ConfigPage />} />
+          </Routes>
+        </AnimatePresence>
+        <AnimatePresence>
+          {location.pathname === '/' && <FloatingActionButton activeFilter={activeFilter} />}
+        </AnimatePresence>
       </main>
     </div>
   );

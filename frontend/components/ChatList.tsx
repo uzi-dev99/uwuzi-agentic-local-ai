@@ -78,7 +78,7 @@ const ChatList: React.FC<ChatListProps> = ({ activeFilter }) => {
                                 onChange={(e) => setNewTitle(e.target.value)}
                                 onBlur={() => setEditingChatId(null)}
                                 onClick={(e) => {e.preventDefault(); e.stopPropagation();}}
-                                className="w-full bg-primary text-light font-semibold p-1 rounded-md border border-accent-green"
+                                className="w-full bg-primary text-light font-semibold p-1 rounded-md border border-accent"
                                 autoFocus
                             />
                         </form>
@@ -95,7 +95,7 @@ const ChatList: React.FC<ChatListProps> = ({ activeFilter }) => {
                     {chat.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mt-2">
                             {chat.tags.map(tag => (
-                                <span key={tag} className="text-xs bg-primary text-accent-green font-medium px-2 py-0.5 rounded-full">
+                                <span key={tag} className="text-xs bg-primary text-accent font-medium px-2 py-0.5 rounded-full">
                                     #{tag}
                                 </span>
                             ))}
@@ -107,7 +107,7 @@ const ChatList: React.FC<ChatListProps> = ({ activeFilter }) => {
               <div className="flex items-center ml-2 mr-4 flex-shrink-0">
                 <button 
                     onClick={(e) => handleEditClick(e, chat.id, chat.title)} 
-                    className="p-2 rounded-full text-muted hover:bg-accent-green/20 hover:text-accent-green opacity-60 group-hover:opacity-100 transition-opacity"
+                    className="p-2 rounded-full text-muted hover:bg-accent/20 hover:text-accent opacity-60 group-hover:opacity-100 transition-opacity"
                     aria-label="Rename chat"
                 >
                     <EditIcon className="w-5 h-5"/>

@@ -51,7 +51,7 @@ const Sidebar: React.FC<{
         <div className="p-4 border-b border-secondary">
             <button
                 onClick={handleNewChat}
-                className="w-full flex items-center justify-center gap-2 bg-accent-green hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+                className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg transition-colors"
             >
                 <PlusIcon className="h-5 w-5" />
                 New Chat
@@ -74,7 +74,7 @@ const Sidebar: React.FC<{
                   {folders.map(folder => (
                       <li key={folder.id} onClick={() => handleFilterClick('folder', folder.id)} className={`group flex items-center justify-between text-light hover:bg-secondary rounded-md p-2 cursor-pointer ${activeFilter.type === 'folder' && activeFilter.value === folder.id ? 'bg-accent-green/20' : ''}`}>
                          <div className="flex items-center gap-2">
-                           <FolderIcon className="h-5 w-5 text-accent-green"/>
+                           <FolderIcon className="h-5 w-5 text-accent"/>
                            <span>{folder.name}</span>
                          </div>
                          <button onClick={(e) => { e.stopPropagation(); deleteFolder(folder.id)}} className="opacity-0 group-hover:opacity-100 text-muted hover:text-danger">
@@ -91,7 +91,7 @@ const Sidebar: React.FC<{
                       onChange={(e) => setNewFolderName(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleCreateFolder()}
                       placeholder="New folder name..."
-                      className="w-full bg-secondary text-light placeholder-muted p-2 rounded-md text-sm border border-transparent focus:border-accent-green focus:ring-0"
+                      className="w-full bg-secondary text-light placeholder-muted p-2 rounded-md text-sm border border-transparent focus:border-accent focus:ring-0"
                   />
                    <button onClick={handleCreateFolder} className="w-full mt-2 text-sm bg-secondary hover:bg-primary text-light font-semibold py-1 px-3 rounded-md transition-colors">
                       Create Folder

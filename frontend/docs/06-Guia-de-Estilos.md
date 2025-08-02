@@ -19,8 +19,8 @@ tailwind.config = {
         'primary': '#111827',        // Fondo principal oscuro
         'secondary': '#1F2937',      // Fondo para elementos secundarios (burbujas de IA, inputs)
         'user-bubble': '#047857',   // Fondo para las burbujas de mensaje del usuario
-        'accent-violet': '#8b5cf6', // Acento principal para la vista de chat
-        'accent-green': '#10b981',  // Acento principal para la vista de inicio/sidebar
+        'accent': '#34D399',      // Verde esmeralda para elementos interactivos principales
+'accent-dark': '#059669',   // Verde más oscuro para estados hover/active
         'light': '#E5E7EB',         // Color de texto principal
         'muted': '#6B7281',         // Color para textos secundarios y elementos desactivados
         'danger': '#ef4444'         // Color para acciones destructivas (eliminar)
@@ -34,8 +34,7 @@ tailwind.config = {
 
 Para crear una distinción visual clara, se sigue una regla simple:
 
--   **Vista Principal (`HomePage`, `Sidebar`, `ChatList`)**: Utiliza `accent-green` como color de acento principal para botones, filtros activos, y estados de foco.
--   **Vista de Chat (`ChatPage`)**: Utiliza `accent-violet` como color de acento principal para etiquetas, el modo de chat, y otros elementos interactivos.
+-   **Toda la aplicación**: Utiliza `accent` como el color de acento principal para todos los elementos interactivos, incluyendo botones, enlaces, íconos activos y estados de foco. El color `accent-dark` se utiliza para los estados `hover` y `active` para proporcionar retroalimentación visual.
 
 ### Tipografía
 
@@ -46,7 +45,7 @@ Se utilizan las fuentes estándar del sistema (`font-sans`) para un rendimiento 
 Para mantener la estética inmersiva, se ha implementado una barra de desplazamiento personalizada a nivel global directamente en `index.html`.
 
 -   Utiliza los colores `primary` y `muted` de la paleta.
--   El estado `hover` cambia al color `accent-green`, en línea con el tema de la vista principal.
+
 -   Se han añadido reglas tanto para navegadores WebKit (Chrome, Edge, Safari) como para Firefox para una máxima compatibilidad.
 
 ### Clases Reutilizables y "Component-driven CSS"

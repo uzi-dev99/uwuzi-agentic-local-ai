@@ -42,18 +42,22 @@ const renderAttachment = (attachment: Attachment) => {
 };
 
 const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
-  const { content, attachments } = message;
+  const { content, attachments, timestamp } = message;
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString(navigator.language, { hour: '2-digit', minute: '2-digit', hour12: false });
+  };
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-1">
       {attachments && attachments.length > 0 && (
         <div className="flex flex-wrap items-start gap-2">
           {attachments.map(renderAttachment)}
         </div>
       )}
       {content && (
-        <div
-          className={`prose prose-invert prose-sm text-light`}
-        >
+        <div className={`prose prose-invert prose-sm text-light`}>
           <ReactMarkdown
             components={{
               code({ node, className, children, ...props }) {
@@ -86,7 +90,7 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
                       </SyntaxHighlighter>
                   </div>
                 ) : (
-                  <code className="bg-secondary text-accent-violet px-1.5 py-1 rounded-md" {...props}>
+                  <code className="bg-secondary text-accent px-1.5 py-1 rounded-md" {...props}>
                     {children}
                   </code>
                 );
@@ -97,6 +101,11 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
           </ReactMarkdown>
         </div>
       )}
+      <div className="flex justify-end items-center">
+        <span className="text-xs text-muted-foreground/60">
+          {formatTime(timestamp)}
+        </span>
+      </div>
     </div>
   );
 };

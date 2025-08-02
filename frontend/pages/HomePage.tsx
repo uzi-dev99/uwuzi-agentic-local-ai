@@ -1,11 +1,12 @@
 import React from 'react';
+import AnimatedPage from '../components/AnimatedPage';
 import { useGesture } from 'react-use-gesture';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import HomeHeader from '../components/HomeHeader';
 import ChatList from '../components/ChatList';
 import { useChatStore } from '../contexts/ChatContext';
 import { useSidebar } from '../contexts/SidebarContext';
-import FloatingActionButton from '../components/FloatingActionButton';
+
 
 interface HomePageProps {
   activeFilter: {
@@ -40,13 +41,14 @@ const HomePage: React.FC<HomePageProps> = ({ activeFilter }) => {
   }
 
   return (
-    <div {...bind()} className="flex flex-col h-full w-full bg-primary relative touch-pan-y">
-      <HomeHeader title={title} />
-      <div className="flex-1 overflow-y-auto min-h-0">
-        <ChatList activeFilter={activeFilter} />
+    <AnimatedPage>
+      <div {...bind()} className="flex flex-col h-full w-full bg-primary relative touch-pan-y">
+        <HomeHeader title={title} />
+        <div className="flex-1 overflow-y-auto min-h-0">
+          <ChatList activeFilter={activeFilter} />
+        </div>
       </div>
-      <FloatingActionButton activeFilter={activeFilter} />
-    </div>
+    </AnimatedPage>
   );
 };
 

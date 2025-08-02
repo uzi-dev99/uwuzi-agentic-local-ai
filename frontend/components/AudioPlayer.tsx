@@ -53,7 +53,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioUrl }) => {
     <div className="bg-primary/50 rounded-full p-2 flex items-center gap-2 w-full max-w-sm">
       <audio ref={audioRef} src={audioUrl} className="hidden" onLoadedMetadata={() => audioRef.current && setDuration(audioRef.current.duration)} />
 
-      <button onClick={handlePlayPause} className="p-2 text-light rounded-full focus:outline-none focus:ring-2 focus:ring-accent-violet">
+      <button onClick={handlePlayPause} className="p-2 text-light rounded-full focus:outline-none focus:ring-2 focus:ring-accent">
         {isPlaying ? (
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
             <path fillRule="evenodd" d="M6.75 5.25a.75.75 0 0 1 .75.75v12a.75.75 0 0 1-1.5 0V6a.75.75 0 0 1 .75-.75Zm9 0a.75.75 0 0 1 .75.75v12a.75.75 0 0 1-1.5 0V6a.75.75 0 0 1 .75-.75Z" clipRule="evenodd" />
@@ -68,7 +68,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioUrl }) => {
       <div className="flex-1 flex items-center gap-3">
         <div className="w-full bg-secondary rounded-full h-2">
           <div 
-            className="bg-accent-violet h-2 rounded-full"
+            className="bg-accent h-2 rounded-full"
             style={{ width: `${duration > 0 ? (progress / duration) * 100 : 0}%` }}
           ></div>
         </div>
