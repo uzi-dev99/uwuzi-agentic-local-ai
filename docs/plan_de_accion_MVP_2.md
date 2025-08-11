@@ -74,38 +74,103 @@ Al separar claramente estas dos fases, aseguramos una entrega rápida y de alta 
 
 -----
 
-## Fase 2: Mejoras UI  
+## Fase 2: Mejoras UI [COMPLETADA]
 
-- **Falta hora en los mensajes enviados y recibidos, también de ser posible like whatsapp separar por día.**
+*   **[x] Implementar Timestamps y Agrupación de Mensajes por Fecha.**
+*   **[x] Ajustar la Paleta de Colores del Modo Oscuro.**
+*   **[x] Añadir Transiciones de Navegación entre Páginas.**
 
-- **Cambiar colores azulados del modo oscuro, por colores más grises oscuros.**
+---
 
-- **Añadir transición de derecha a izquierda like whatsapp al momento de abrir un chat o volver al homepage, ese efecto de transición como si el chat se deslizase de izq a derecha.**
+## Fase 3: Conectividad Nativa (Android)
+
+**Objetivo:** Garantizar que la aplicación Android empaquetada (.apk) pueda comunicarse exitosamente con el backend local para enviar y recibir mensajes, solucionando el error "Sorry, I encountered an error" que ocurre exclusivamente en la versión nativa.
+
+**Diagnóstico Actualizado:** El error `context canceled` que aparece en los logs del proxy inverso (Caddy/Traefik) cuando el cliente es Android, no se debe a un problema de resolución de `localhost`, sino a cómo el proxy maneja las conexiones de streaming (`keep-alive`) con el backend de uvicorn. La conexión se corta prematuramente. La solución más robusta y sencilla es **desactivar el streaming en el backend** y devolver la respuesta completa de una sola vez.
 
 ### Plan de Acción Técnico
 
-Aquí detallo las tareas necesarias para completar la Fase 2.
+**Tarea 3.1: Análisis de Configuración de Red**
 
-**Tarea 1: Implementar Timestamps y Agrupación de Mensajes por Fecha**
+*   **Objetivo:** Identificar dónde se define la URL del backend en el código del frontend y confirmar que está utilizando `localhost`.
+*   **Archivos a Inspeccionar:**
+    1.  `frontend/services/backendService.ts`: Localizar la variable o constante que define la URL base de la API.
+    2.  `frontend/capacitor.config.ts`: Revisar si existe alguna configuración de servidor que pueda estar afectando la comunicación.
 
-*   **Objetivo:** Mostrar la hora en cada burbuja de mensaje y agrupar los mensajes por día con un separador de fecha para mejorar la contextualización temporal de la conversación.
-*   **Archivos a Modificar:**
-    1.  `frontend/components/MessageList.tsx`: Se implementará la lógica principal aquí. Se creará una función para procesar la lista de mensajes y agruparlos por fecha. Antes de renderizar los mensajes de un nuevo día, se insertará un componente `DateSeparator`.
-    2.  `frontend/components/MessageContent.tsx`: Se modificará para añadir un pequeño elemento de texto con la hora del mensaje (`createdAt`) dentro de la burbuja de chat, formateado a `HH:mm`.
-    3.  `frontend/components/DateSeparator.tsx` (Nuevo): Se creará un nuevo componente simple para mostrar la fecha (ej: "Hoy", "Ayer", "15 de Julio").
+**[x] Tarea 3.2: Desactivar Streaming en el Backend**
 
-**Tarea 2: Ajustar la Paleta de Colores del Modo Oscuro (En Curso)**
+*   **Objetivo:** Modificar el backend para que genere y devuelva la respuesta completa del modelo en una única petición HTTP, en lugar de un stream.
+*   **Estrategia de Implementación:**
+    1.  **`backend/services/chat_service.py`:**
+        *   Modificar la función `generate_response` para que sea `async` y devuelva un `Dict` en lugar de un `AsyncGenerator`.
+        *   Cambiar el payload de la petición a Ollama a `"stream": False`.
+        *   En lugar de iterar sobre la respuesta, hacer una única llamada `await client.post(...)` y procesar la respuesta JSON completa.
+        *   Devolver el diccionario JSON resultante.
+    2.  **`backend/main.py`:**
+        *   Cambiar la importación de `StreamingResponse` a `JSONResponse`.
+        *   En el endpoint `direct_chat_endpoint`, `await` la llamada a `generate_response`.
+        *   Envolver la respuesta en un `JSONResponse(content=response_data)`.
 
-*   **Objetivo:** Refinar la estética de la aplicación, migrando de una paleta con tonos azules a una con grises oscuros, egocéntricos y más elegante.
-*   **Enfoque:** Se realizará una búsqueda directa de los códigos de color azules en la base de código del frontend y se reemplazarán por una nueva paleta de grises oscuros. Este enfoque evita una refactorización completa del sistema de estilos para una entrega más rápida.
-*   **Archivos Potenciales a Modificar:**
-    1.  `frontend/index.css`: Principal candidato para albergar las variables de color base.
-    2.  Componentes `.tsx`: Búsqueda de colores hardcodeados o clases de utilidad específicas.
+**[x] Tarea 3.3: Adaptar el Frontend a la Respuesta No-Stream**
 
-**Tarea 3: Añadir Transiciones de Navegación entre Páginas**
+*   **Objetivo:** Modificar el servicio del frontend que consume la API para que maneje una respuesta JSON estándar en lugar de un stream.
+*   **Archivos a Inspeccionar y Modificar:**
+    1.  `frontend/services/backendService.ts`: Localizar la función que llama al endpoint `/api/v1/chat/direct`.
+    2.  **Lógica a Cambiar:**
+        *   Reemplazar la lógica de `fetch` que procesa el stream (usando `ReadableStreamDefaultReader` y `TextDecoder`) por una llamada `axios` estándar o una llamada `fetch` que simplemente espera el `.json()` de la respuesta.
+        *   La función deberá devolver la respuesta completa al `ChatContext` para que actualice el estado.
 
-*   **Objetivo:** Aumentar la sensación de fluidez y de aplicación nativa implementando animaciones de deslizamiento al navegar entre la lista de chats y una conversación específica.
-*   **Archivos a Modificar:**
-    1.  `frontend/App.tsx`: Se envolverá la definición de las rutas (`<Routes>`) con un gestor de animaciones. `Framer Motion` es la herramienta ideal para esto, usando su componente `<AnimatePresence>`.
-    2.  `frontend/pages/HomePage.tsx` y `frontend/pages/ChatPage.tsx`: Se añadirán propiedades de animación a los contenedores principales de estas páginas para definir las transiciones de entrada y salida (deslizamiento desde/hacia la derecha).
+**[x] Tarea 3.4: Verificación en Dispositivo Físico**
+
+*   **Objetivo:** Compilar, ejecutar y probar la aplicación en un dispositivo Android para confirmar que la nueva estrategia de respuesta no-stream soluciona el problema de conectividad.
+*   **Pasos a Seguir:**
+    1.  Reiniciar el servidor de backend para aplicar los cambios.
+    2.  Sincronizar los cambios del proyecto web con la plataforma nativa: `npx capacitor sync android`.
+    3.  Abrir el proyecto en Android Studio: `npx capacitor open android`.
+    4.  Compilar y ejecutar la aplicación en el emulador o dispositivo físico.
+    5.  Realizar una prueba de extremo a extremo: enviar un mensaje y verificar que se recibe la respuesta completa del modelo sin errores.
+
+-----
+
+## Fase 4: Bases para el Modo Agente (Integración con n8n)
+
+**Objetivo:** Preparar la infraestructura para la V2, permitiendo que el backend se comunique con un workflow de n8n a través de webhooks. Esto es el primer paso para habilitar el "Modo Agente".
+
+### Plan de Acción Técnico
+
+**[ ] Tarea 4.1: Configuración del Webhook en n8n**
+
+*   **Objetivo:** Crear un workflow simple en n8n que se active mediante un webhook.
+*   **Pasos a Seguir:**
+    1.  En la instancia de n8n, crear un nuevo workflow.
+    2.  Añadir un nodo "Webhook" como disparador (trigger).
+    3.  Configurar el webhook para que espere peticiones `POST`.
+    4.  Copiar la URL del webhook de prueba (Test URL).
+
+**[ ] Tarea 4.2: Implementar Servicio de n8n en el Backend**
+
+*   **Objetivo:** Crear un nuevo servicio en el backend (`n8n_service.py`) que se encargue de llamar al webhook de n8n.
+*   **Estrategia de Implementación:**
+    1.  **Crear `backend/services/n8n_service.py`:**
+        *   Añadir una función `invoke_workflow(data: dict)`.
+        *   Esta función usará `httpx` para hacer una petición `POST` a la URL del webhook obtenida en el paso anterior.
+        *   La URL se almacenará en una nueva variable de entorno `N8N_WEBHOOK_URL` en el archivo `.env`.
+    2.  **Actualizar `backend/main.py`:**
+        *   Importar el nuevo servicio.
+        *   En el endpoint `POST /api/v1/agent/invoke` (que actualmente es un placeholder), añadir la lógica para llamar a `n8n_service.invoke_workflow` con los datos de la petición.
+
+**[ ] Tarea 4.3: Workflow Simple de Prueba**
+
+*   **Objetivo:** Completar el circuito en n8n para asegurar que la comunicación funciona.
+*   **Pasos a Seguir:**
+    1.  En el workflow de n8n, después del nodo "Webhook", añadir un nodo "Set".
+    2.  Configurar el nodo "Set" para que tome un valor de la entrada del webhook (ej: `{{ $json.body.message }}`) y lo añada a un nuevo campo (ej: `response_message`).
+    3.  Añadir un nodo final que responda a la petición del webhook, devolviendo el `response_message`.
+
+**[ ] Tarea 4.4: Prueba de Extremo a Extremo**
+
+*   **Objetivo:** Verificar que el backend puede activar el workflow de n8n y recibir una respuesta.
+*   **Pasos a Seguir:**
+    1.  Utilizar una herramienta como Postman o `curl` para enviar una petición `POST` al endpoint `/api/v1/agent/invoke` del backend.
+    2.  Verificar que la petición activa el workflow en n8n y que la respuesta de n8n se devuelve correctamente a través del backend.
 

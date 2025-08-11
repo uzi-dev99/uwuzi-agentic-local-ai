@@ -7,38 +7,36 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Obtener la URL del webhook de N8N desde las variables de entorno
-N8N_SALES_REPORT_WEBHOOK = os.getenv("N8N_SALES_REPORT_WEBHOOK")
+N8N_WEBHOOK_URL = os.getenv("N8N_WEBHOOK_URL")
 
-async def trigger_sales_report(params: dict) -> Dict[str, str]:
+async def invoke_workflow(data: dict) -> Dict[str, str]:
     """
-    Función asíncrona que activa el workflow de reporte de ventas en N8N.
+    Función asíncrona que activa un workflow en N8N a través de un webhook.
     
     Args:
-        params (dict): Parámetros para el reporte de ventas
+        data (dict): Los datos a enviar al workflow de N8N.
         
     Returns:
-        Dict[str, str]: Diccionario con el estado de la operación
+        Dict[str, str]: La respuesta del workflow de N8N o un mensaje de error.
     """
-    if not N8N_SALES_REPORT_WEBHOOK or N8N_SALES_REPORT_WEBHOOK == "TU_WEBHOOK_DE_N8N_AQUI":
+    if not N8N_WEBHOOK_URL:
         return {
             "status": "error",
-            "message": "Webhook de N8N no configurado correctamente"
+            "message": "Webhook de N8N no configurado correctamente en la variable N8N_WEBHOOK_URL"
         }
     
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(timeout=60.0) as client:
         try:
             # Realizar petición POST al webhook de N8N
             response = await client.post(
-                N8N_SALES_REPORT_WEBHOOK,
-                json=params
+                N8N_WEBHOOK_URL,
+                json=data
             )
             
-            response.raise_for_status()
+            response.raise_for_status() # Lanza una excepción para errores 4xx/5xx
             
-            return {
-                "status": "success",
-                "message": "Reporte de ventas en proceso."
-            }
+            # Devuelve la respuesta JSON del workflow de N8N
+            return response.json()
             
         except httpx.HTTPStatusError as e:
             return {

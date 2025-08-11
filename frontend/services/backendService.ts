@@ -14,88 +14,73 @@ export interface BackendMessage {
  * @param onChunk - Callback que se ejecuta por cada chunk recibido
  * @param onError - Callback que se ejecuta en caso de error
  */
-export async function invokeDirectChat(
-  messages: Message[],
-  files: File[],
-  onChunk: (chunk: string) => void,
-  onError: (error: Error) => void,
-  signal: AbortSignal
-): Promise<void> {
+interface InvokeDirectChatParams {
+  messages: Message[];
+  files: File[];
+  onComplete: (response: { content: string }) => void;
+  onError: (error: Error) => void;
+  signal: AbortSignal;
+}
+
+export async function invokeDirectChat({
+  messages,
+  files,
+  onComplete,
+  onError,
+  signal,
+}: InvokeDirectChatParams): Promise<void> {
   try {
     const backendUrl = import.meta.env.VITE_BACKEND_API_URL;
     if (!backendUrl) {
       throw new Error('VITE_BACKEND_API_URL no está configurada');
     }
 
-    const formData = new FormData();
     const backendMessages: BackendMessage[] = messages.map(msg => ({
       role: msg.role === UserRole.USER ? 'user' : 'assistant',
       content: msg.apiContent || msg.content
     }));
 
-    formData.append('messages', JSON.stringify(backendMessages));
-    files.forEach(file => {
-      formData.append('files', file);
-    });
-
     const fullUrl = `${backendUrl}/chat/direct`;
+    let response;
 
-    const response = await fetch(fullUrl, {
-      method: 'POST',
-      body: formData,
-      signal,
-    });
+    if (files.length > 0) {
+      const formData = new FormData();
+      formData.append('messages', JSON.stringify(backendMessages));
+      files.forEach(file => {
+        formData.append('files', file);
+      });
+      response = await fetch(fullUrl, {
+        method: 'POST',
+        body: formData,
+        signal,
+      });
+    } else {
+      response = await fetch(fullUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ messages: backendMessages }),
+        signal,
+      });
+    }
 
     if (!response.ok) {
-      throw new Error(`Error del servidor: ${response.status} ${response.statusText}`);
+      const errorBody = await response.text();
+      throw new Error(`Error del servidor: ${response.status} ${response.statusText} - ${errorBody}`);
     }
 
-    if (!response.body) {
-      throw new Error('No se recibió cuerpo de respuesta del servidor');
+    // La respuesta ya no es un stream, es un único JSON
+    const responseData = await response.json();
+
+    // El backend ahora devuelve la respuesta completa en el campo 'content'
+    if (responseData && typeof responseData.content === 'string') {
+      onComplete(responseData);
+    } else {
+      // Manejar el caso de que la respuesta no tenga el formato esperado
+      throw new Error('La respuesta del servidor no tiene el formato esperado.');
     }
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        buffer += chunk;
-
-        let braceCount = 0;
-        let lastCut = 0;
-        for (let i = 0; i < buffer.length; i++) {
-          if (buffer[i] === '{') {
-            braceCount++;
-          } else if (buffer[i] === '}') {
-            braceCount--;
-            if (braceCount === 0) {
-              const jsonStr = buffer.substring(lastCut, i + 1);
-              if (jsonStr.trim()) {
-                try {
-                  const jsonChunk = JSON.parse(jsonStr);
-                  if (jsonChunk.response) {
-                    onChunk(jsonChunk.response);
-                  }
-                } catch (e) {
-                  // Ignorar errores de parseo, puede ser un fragmento
-                }
-              }
-              lastCut = i + 1;
-            }
-          }
-        }
-        if (lastCut > 0) {
-          buffer = buffer.substring(lastCut);
-        }
-      }
-    } finally {
-      reader.releaseLock();
-    }
   } catch (error) {
     console.error('Error en invokeDirectChat:', error);
     onError(error instanceof Error ? error : new Error('Error desconocido'));

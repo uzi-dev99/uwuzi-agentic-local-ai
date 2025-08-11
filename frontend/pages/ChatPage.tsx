@@ -42,7 +42,7 @@ function dataURLtoFile(dataurl: string, filename: string): File | null {
 export const ChatPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getChatById, addMessage, updateAssistantMessage, addTagToChat, removeTagFromChat, updateChatMode, renameChat } = useChatStore();
+  const { getChatById, addMessage, setAssistantMessage, addTagToChat, removeTagFromChat, updateChatMode, renameChat } = useChatStore();
   const [isLoading, setIsLoading] = useState(false);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   
@@ -89,7 +89,7 @@ export const ChatPage: React.FC = () => {
     const assistantMessageId = addMessage(id, { role: UserRole.ASSISTANT, content: '' });
 
     if (chat.mode === 'agent') {
-      updateAssistantMessage(id, assistantMessageId, "Sorry, Agent Mode is not available in this version. Please switch to Chat Mode.");
+      setAssistantMessage(id, assistantMessageId, "Sorry, Agent Mode is not available in this version. Please switch to Chat Mode.");
       setIsLoading(false);
       return;
     }
@@ -115,30 +115,30 @@ export const ChatPage: React.FC = () => {
       .filter((file): file is File => file !== null);
 
     try {
-      await invokeDirectChat(
-        currentHistory,
-        filesForBackend, // Pass File[] to the backend
-        (chunk: string) => {
-          updateAssistantMessage(id, assistantMessageId, chunk);
+      await invokeDirectChat({
+        messages: currentHistory,
+        files: filesForBackend,
+        onComplete: (response: { content: string }) => {
+          setAssistantMessage(id, assistantMessageId, response.content);
         },
-        (error: Error) => {
+        onError: (error: Error) => {
           if (error.name === 'AbortError') {
             console.log('Request aborted by user.');
-            updateAssistantMessage(id, assistantMessageId, ' (Stopped)');
+            setAssistantMessage(id, assistantMessageId, ' (Stopped)');
           } else {
-            console.error('Failed to get streaming response', error);
-            updateAssistantMessage(id, assistantMessageId, 'Sorry, I encountered an error.');
+            console.error('Failed to get response', error);
+            setAssistantMessage(id, assistantMessageId, 'Sorry, I encountered an error.');
           }
         },
-        controller.signal
-      );
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
-        console.log('Fetch aborted.');
-      } else {
+        signal: controller.signal,
+      });
+    } catch (error) {
         console.error("Failed to invoke agent", error);
-        updateAssistantMessage(id, assistantMessageId, "Sorry, I encountered an error.");
-      }
+        if (error instanceof Error) {
+          setAssistantMessage(id, assistantMessageId, `Sorry, an error occurred: ${error.message}`);
+        } else {
+          setAssistantMessage(id, assistantMessageId, "Sorry, an unknown error occurred.");
+        }
     } finally {
       setIsLoading(false);
       setAbortController(null);

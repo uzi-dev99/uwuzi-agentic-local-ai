@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +8,7 @@ import json
 
 # Importar servicios
 from services.chat_service import generate_response
+from services.n8n_service import invoke_workflow
 
 # Setup basic logging
 logging.basicConfig(level=logging.INFO)
@@ -20,21 +21,12 @@ app = FastAPI(
 )
 
 # --- CORS Middleware ---
-origins = [
-    "http://localhost",
-    "http://localhost:8080",
-    "http://localhost:8081",
-    "http://localhost:5466",
-    "http://localhost:5173",  # Para desarrollo del frontend
-    "http://localhost:5174",  # Puerto alternativo para desarrollo del frontend
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],  # Permitir todos los orígenes
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # Permitir todos los métodos
+    allow_headers=["*"],  # Permitir todas las cabeceras
 )
 # --- FIN CORS ---
 
@@ -46,26 +38,38 @@ logger = logging.getLogger(__name__)
 class ChatRequest(BaseModel):
     messages: List[Dict[str, str]]
 
+
 # --- Endpoints ---
 
 @app.post("/api/v1/chat/direct")
-async def direct_chat_endpoint(
-    messages: str = Form(...),
-    files: Optional[List[UploadFile]] = File(None)
-):
+async def direct_chat_endpoint(request: Request):
     """
     Endpoint para comunicación directa con el modelo multimodal.
-    Recibe el historial de chat y archivos adjuntos (imágenes, audio).
+    Recibe el historial de chat y opcionalmente archivos adjuntos.
+    Maneja tanto 'application/json' como 'multipart/form-data'.
     """
     try:
-        # El historial de mensajes llega como un string JSON, hay que parsearlo
-        messages_list = json.loads(messages)
-        logger.info(f"Received direct chat request with {len(messages_list)} messages.")
+        content_type = request.headers.get('content-type', '')
         
-        return StreamingResponse(
-            generate_response(messages=messages_list, files=files),
-            media_type="application/x-ndjson"
-        )
+        if 'multipart/form-data' in content_type:
+            form = await request.form()
+            messages_str = form.get('messages')
+            if not messages_str:
+                raise HTTPException(status_code=400, detail="'messages' field is required in form data.")
+            messages_list = json.loads(messages_str)
+            files = form.getlist('files')
+        elif 'application/json' in content_type:
+            data = await request.json()
+            messages_list = data.get('messages')
+            if not messages_list:
+                raise HTTPException(status_code=400, detail="'messages' field is required in JSON body.")
+            files = None # No files in JSON mode
+        else:
+            raise HTTPException(status_code=415, detail=f"Unsupported media type: {content_type}")
+
+        logger.info(f"Received direct chat request with {len(messages_list)} messages.")
+        response_data = await generate_response(messages=messages_list, files=files)
+        return JSONResponse(content=response_data)
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON format for messages.")
     except Exception as e:
@@ -73,15 +77,26 @@ async def direct_chat_endpoint(
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/v1/agent/invoke")
-async def agent_invoke_placeholder():
+async def agent_invoke(request: "AgentInvokeRequest"):
     """
-    Placeholder para el endpoint del agente de la V2.
-    Actualmente devuelve un mensaje informativo.
+    Invokes the n8n workflow for the agent mode.
+    Receives the user's message and forwards it to the n8n webhook.
     """
-    async def stream_placeholder():
-        yield json.dumps({"message": "Agent mode is not available in this version."})
-    
-    return StreamingResponse(stream_placeholder(), media_type="application/x-ndjson")
+    try:
+        # The request object is already validated by Pydantic
+        # Now, we pass the data to our n8n service
+        payload = request.dict()
+        logger.info(f"Invoking agent workflow with payload: {payload}")
+        response_data = await invoke_workflow(payload)
+        return response_data
+    except HTTPException as e:
+        # Forward HTTP exceptions from the service
+        raise e
+    except Exception as e:
+        # Handle other potential errors
+        logger.error(f"Error in agent_invoke: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/")
 async def read_root():

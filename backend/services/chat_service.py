@@ -21,13 +21,13 @@ load_dotenv()
 OLLAMA_API_URL = os.getenv("OLLAMA_API_URL")
 MULTIMODAL_MODEL = os.getenv("MULTIMODAL_MODEL", "gemma3:12b")
 
-async def generate_response(messages: List[Dict[str, str]], files: Optional[List[UploadFile]]) -> AsyncGenerator[str, None]:
+async def generate_response(messages: List[Dict[str, str]], files: Optional[List[UploadFile]]) -> Dict:
     """
     Genera una respuesta multimodal procesando texto, imágenes y audio.
+    Devuelve la respuesta completa como un único objeto JSON.
     """
     if not OLLAMA_API_URL:
-        yield json.dumps({"error": "OLLAMA_API_URL no está configurada."})
-        return
+        return {"error": "OLLAMA_API_URL no está configurada."}
 
     base64_images = []
     audio_transcription = ""
@@ -47,11 +47,9 @@ async def generate_response(messages: List[Dict[str, str]], files: Optional[List
                     logger.info(f"Audio '{file.filename}' transcrito.")
                 except Exception as e:
                     logger.error(f"Error al transcribir audio '{file.filename}': {e}")
-                    yield json.dumps({"error": f"Error al procesar el audio: {e}"})
+                    return {"error": f"Error al procesar el audio: {e}"}
 
     # 2. Construir el prompt y el contexto
-    # Estrategia de ventana deslizante simple: usar todo el historial
-    # para construir un único prompt, que es como funciona el endpoint /api/generate
     context_prompt = "\n".join([f"{m['role']}: {m['content']}" for m in messages])
     final_prompt = f"{context_prompt}{audio_transcription}".strip()
 
@@ -59,32 +57,28 @@ async def generate_response(messages: List[Dict[str, str]], files: Optional[List
     payload = {
         "model": MULTIMODAL_MODEL,
         "prompt": final_prompt,
-        "stream": True
+        "stream": False  # Desactivamos el streaming
     }
     if base64_images:
         payload["images"] = base64_images
 
     logger.info(f"Enviando payload a Ollama. Prompt: '{final_prompt[:100]}...'")
 
-    # 4. Llamar a Ollama y hacer streaming de la respuesta
-    async with httpx.AsyncClient(timeout=None) as client:
+    # 4. Llamar a Ollama y obtener la respuesta completa
+    async with httpx.AsyncClient(timeout=300.0) as client: # Timeout generoso
         try:
-            async with client.stream("POST", OLLAMA_API_URL, json=payload) as response:
-                response.raise_for_status()
-                async for line in response.aiter_lines():
-                    if line:
-                        try:
-                            chunk = json.loads(line)
-                            yield json.dumps(chunk) # Retransmitir el chunk JSON completo
-                            if chunk.get("done"):
-                                break
-                        except json.JSONDecodeError:
-                            logger.warning(f"No se pudo decodificar la línea JSON de Ollama: {line}")
-                            continue
+            response = await client.post(OLLAMA_API_URL, json=payload)
+            response.raise_for_status()
+            # La respuesta de Ollama con stream=False es un único objeto JSON
+            ollama_response = response.json()
+            logger.info("Respuesta completa recibida de Ollama.")
+            # Envolvemos la respuesta en nuestra propia estructura
+            return {"content": ollama_response.get("response", "")}
+
         except httpx.HTTPStatusError as e:
             error_msg = e.response.text
             logger.error(f"Error de estado HTTP de Ollama: {e.response.status_code} - {error_msg}")
-            yield json.dumps({"error": f"Error del servidor de IA: {error_msg}"})
+            return {"error": f"Error del servidor de IA: {error_msg}"}
         except Exception as e:
             logger.error(f"Error inesperado en la comunicación con Ollama: {e}", exc_info=True)
-            yield json.dumps({"error": f"Error de conexión con el servidor de IA: {e}"})
+            return {"error": f"Error de conexión con el servidor de IA: {e}"}

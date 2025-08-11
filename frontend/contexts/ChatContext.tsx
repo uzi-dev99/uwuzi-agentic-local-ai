@@ -11,7 +11,7 @@ interface ChatContextType {
   createChat: (folderId?: string | null) => Chat;
   getChatById: (id: string) => Chat | undefined;
   addMessage: (chatId: string, message: Omit<Message, 'id' | 'timestamp'>) => string;
-  updateAssistantMessage: (chatId: string, messageId: string, chunk: string) => void;
+  setAssistantMessage: (chatId: string, messageId: string, content: string) => void;
   deleteChat: (id: string) => void;
   renameChat: (chatId: string, newTitle: string) => void;
   clearAllData: () => void;
@@ -132,13 +132,12 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return newMessageId;
   };
 
-  const updateAssistantMessage = (chatId: string, messageId: string, chunk: string) => {
+  const setAssistantMessage = (chatId: string, messageId: string, content: string) => {
     setChats(prev => prev.map(chat => {
         if (chat.id === chatId) {
             const updatedMessages = chat.messages.map(msg => {
                 if (msg.id === messageId) {
-                    const newContent = msg.content + chunk;
-                    return { ...msg, content: newContent, apiContent: newContent };
+                    return { ...msg, content: content, apiContent: content };
                 }
                 return msg;
             });
@@ -197,7 +196,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     createChat,
     getChatById,
     addMessage,
-    updateAssistantMessage,
+    setAssistantMessage,
     deleteChat,
     renameChat,
     clearAllData,
