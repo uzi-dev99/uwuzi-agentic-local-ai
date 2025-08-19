@@ -132,45 +132,61 @@ Al separar claramente estas dos fases, aseguramos una entrega rápida y de alta 
 
 -----
 
-## Fase 4: Bases para el Modo Agente (Integración con n8n)
+## Fase 4: Modo Agente como Canal Directo (Proxy n8n)
 
-**Objetivo:** Preparar la infraestructura para la V2, permitiendo que el backend se comunique con un workflow de n8n a través de webhooks. Esto es el primer paso para habilitar el "Modo Agente".
+**Objetivo:** Habilitar el modo agente como un proxy transparente hacia n8n, soportando `application/json` y `multipart/form-data` para transportar texto, imágenes base64/archivos, audio .mp3, PDF y archivos arbitrarios. La lógica de negocio vive en n8n; el backend solo reenvía y normaliza la respuesta para que siempre incluya `content`.
 
 ### Plan de Acción Técnico
 
-**[ ] Tarea 4.1: Configuración del Webhook en n8n**
+- **[x] Tarea 4.1: Actualizar Endpoint del Agente en Backend (proxy transparente)**
+  - Permitir `application/json` y `multipart/form-data` en `POST /api/v1/agent/invoke`.
+  - Detectar el `Content-Type` y reenviar a n8n mediante:
+    - JSON: `invoke_workflow(payload)`
+    - Multipart: `invoke_workflow_multipart(form_fields, files)`
+  - Normalizar respuesta a `{ content: string, ... }`.
 
-*   **Objetivo:** Crear un workflow simple en n8n que se active mediante un webhook.
-*   **Pasos a Seguir:**
-    1.  En la instancia de n8n, crear un nuevo workflow.
-    2.  Añadir un nodo "Webhook" como disparador (trigger).
-    3.  Configurar el webhook para que espere peticiones `POST`.
-    4.  Copiar la URL del webhook de prueba (Test URL).
+- **[x] Tarea 4.2: Servicio de n8n en Backend**
+  - Implementar `invoke_workflow(data: dict)` para JSON.
+  - Implementar `invoke_workflow_multipart(form_fields: Dict[str, string], files: List[UploadFile])` para multipart.
+  - Gestionar errores y normalizar respuesta con `content`.
 
-**[ ] Tarea 4.2: Implementar Servicio de n8n en el Backend**
+- **[x] Tarea 4.3: Frontend - soporte multipart en invokeAgent**
+  - Actualizar `frontend/services/backendService.ts` para que `invokeAgent` acepte `files` y construya `FormData` cuando corresponda.
+  - Respetar la interfaz unificada de respuesta `{ content }`.
 
-*   **Objetivo:** Crear un nuevo servicio en el backend (`n8n_service.py`) que se encargue de llamar al webhook de n8n.
-*   **Estrategia de Implementación:**
-    1.  **Crear `backend/services/n8n_service.py`:**
-        *   Añadir una función `invoke_workflow(data: dict)`.
-        *   Esta función usará `httpx` para hacer una petición `POST` a la URL del webhook obtenida en el paso anterior.
-        *   La URL se almacenará en una nueva variable de entorno `N8N_WEBHOOK_URL` en el archivo `.env`.
-    2.  **Actualizar `backend/main.py`:**
-        *   Importar el nuevo servicio.
-        *   En el endpoint `POST /api/v1/agent/invoke` (que actualmente es un placeholder), añadir la lógica para llamar a `n8n_service.invoke_workflow` con los datos de la petición.
+- **[x] Tarea 4.4: Integración en ChatPage**
+  - Pasar adjuntos al modo agente: convertir `FileData` a `File` y enviar vía `invokeAgent` usando la nueva firma basada en objeto.
 
-**[ ] Tarea 4.3: Workflow Simple de Prueba**
+- **[ ] Tarea 4.5: Configuración del Webhook en n8n**
+  - Crear workflow con nodo Webhook (POST) y capturar campos:
+    - `messages` (JSON string) y `files` (array) en multipart.
+    - Payload JSON cuando sea `application/json`.
+  - Ajustar nodos para responder con `{ content: string }`.
 
-*   **Objetivo:** Completar el circuito en n8n para asegurar que la comunicación funciona.
-*   **Pasos a Seguir:**
-    1.  En el workflow de n8n, después del nodo "Webhook", añadir un nodo "Set".
-    2.  Configurar el nodo "Set" para que tome un valor de la entrada del webhook (ej: `{{ $json.body.message }}`) y lo añada a un nuevo campo (ej: `response_message`).
-    3.  Añadir un nodo final que responda a la petición del webhook, devolviendo el `response_message`.
+- **[ ] Tarea 4.6: Workflow de Prueba en n8n (E2E simple)**
+  - Después del Webhook: nodo Function/Set que lea `messages` y, si hay archivos, devuelva metadatos (nombre, tipo, tamaño) o procese según caso (p. ej., enviar audio a transcripción).
+  - Responder con `{ content: 'OK: recibido X archivo(s), último mensaje: ...' }`.
 
-**[ ] Tarea 4.4: Prueba de Extremo a Extremo**
+- **[ ] Tarea 4.7: Validación E2E y en Dispositivo Físico**
+  - Probar desde la app: enviar texto, imagen, audio .mp3, PDF y archivo arbitrario en modo agente.
+  - Confirmar que n8n recibe correctamente `messages` y `files` y responde con `{ content }`.
+  - Validar UX móvil: feedback de envío, estados de carga, errores claros.
 
-*   **Objetivo:** Verificar que el backend puede activar el workflow de n8n y recibir una respuesta.
-*   **Pasos a Seguir:**
-    1.  Utilizar una herramienta como Postman o `curl` para enviar una petición `POST` al endpoint `/api/v1/agent/invoke` del backend.
-    2.  Verificar que la petición activa el workflow en n8n y que la respuesta de n8n se devuelve correctamente a través del backend.
+### Notas de Contrato (Backend <-> n8n)
+
+- En multipart, el backend envía:
+  - Campo `messages`: string JSON del arreglo de `{ role, content }`.
+  - Múltiples `files` bajo la misma clave `files`.
+- En JSON, el backend envía `{ messages: BackendMessage[] }`.
+- n8n debe responder siempre `{ content: string, ... }` (el backend lo normaliza si no coincide).
+
+### Próxima Tarea a Ejecutar
+
+- Ejecutar Tarea 4.5 y 4.6 en n8n: crear el webhook y un workflow de eco que devuelva `{ content }`, validando que recibe `messages` y `files` desde la app. Luego realizar la Tarea 4.7 de validación en dispositivo.
+
+### Criterios de Aceptación
+
+- Modo agente envía y recibe correctamente los tipos: texto, imagen base64/archivo, audio .mp3, PDF y archivo arbitrario.
+- La respuesta del backend hacia el frontend siempre contiene `content`.
+- La UI muestra el contenido devuelto sin errores y mantiene una UX móvil fluida.
 

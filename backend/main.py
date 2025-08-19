@@ -8,7 +8,7 @@ import json
 
 # Importar servicios
 from services.chat_service import generate_response
-from services.n8n_service import invoke_workflow
+from services.n8n_service import invoke_workflow, invoke_workflow_multipart
 
 # Setup basic logging
 logging.basicConfig(level=logging.INFO)
@@ -77,23 +77,48 @@ async def direct_chat_endpoint(request: Request):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/v1/agent/invoke")
-async def agent_invoke(request: "AgentInvokeRequest"):
+async def agent_invoke(request: Request):
     """
-    Invokes the n8n workflow for the agent mode.
-    Receives the user's message and forwards it to the n8n webhook.
+    Invoca el workflow de n8n para el modo agente.
+    Recibe el payload del frontend y lo reenvía al webhook de n8n.
+    Devuelve un JSON normalizado con la clave 'content' para facilitar el consumo en el frontend.
+    Soporta 'application/json' y 'multipart/form-data' con archivos arbitrarios (imagenes base64, audio mp3, pdf, etc.).
     """
     try:
-        # The request object is already validated by Pydantic
-        # Now, we pass the data to our n8n service
-        payload = request.dict()
-        logger.info(f"Invoking agent workflow with payload: {payload}")
-        response_data = await invoke_workflow(payload)
-        return response_data
+        content_type = request.headers.get('content-type', '')
+
+        if 'multipart/form-data' in content_type:
+            form = await request.form()
+            # Passthrough: reenviar todos los campos de texto y los archivos
+            form_fields: Dict[str, str] = {}
+            files = []
+            for key, value in form.multi_items():
+                if hasattr(value, 'filename'):
+                    # Es un archivo
+                    files.append(value)
+                else:
+                    form_fields[str(key)] = str(value)
+
+            logger.info(f"Invoking n8n multipart with {len(form_fields)} fields and {len(files)} files")
+            response_data = await invoke_workflow_multipart(form_fields, files)  # type: ignore[arg-type]
+        elif 'application/json' in content_type:
+            data = await request.json()
+            payload = data if isinstance(data, dict) else {}
+            logger.info(f"Invoking n8n JSON with payload keys: {list(payload.keys())}")
+            response_data = await invoke_workflow(payload)
+        else:
+            raise HTTPException(status_code=415, detail=f"Unsupported media type: {content_type}")
+
+        # Normalizar salida
+        if isinstance(response_data, dict) and isinstance(response_data.get('content'), str):
+            normalized = response_data
+        else:
+            normalized = {"content": json.dumps(response_data, ensure_ascii=False)}
+
+        return JSONResponse(content=normalized)
     except HTTPException as e:
-        # Forward HTTP exceptions from the service
         raise e
     except Exception as e:
-        # Handle other potential errors
         logger.error(f"Error in agent_invoke: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
