@@ -135,20 +135,3 @@ async def invoke_workflow_multipart(form_fields: Dict[str, str], files: List[Upl
                 "status": "error"
             }
 
-async def trigger_sales_report(params: Dict) -> Dict[str, str]:
-    """
-    Función especializada para activar el workflow de reportes de ventas en N8N.
-    Utilizada por agent_service cuando se detecta la intención 'sales_report_workflow'.
-    
-    Args:
-        params (Dict): Parámetros específicos del reporte de ventas
-        
-    Returns:
-        Dict[str, str]: Respuesta del workflow de N8N normalizada con 'content'
-    """
-    # Usar invoke_workflow con parámetros específicos para reportes
-    sales_data = {
-        "workflow_type": "sales_report",
-        **params
-    }
-    return await invoke_workflow(sales_data)

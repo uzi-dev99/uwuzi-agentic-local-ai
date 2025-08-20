@@ -11,6 +11,20 @@ import { useFileUpload, FileData } from '../hooks/useFileUpload';
 import { Message } from '../types';
 import AudioPlayer from './AudioPlayer';
 
+// Helper function to get file extension from MIME type
+const getExtensionFromMime = (mimeType: string): string => {
+  const mimeMap: { [key: string]: string } = {
+    'audio/webm': 'webm',
+    'audio/mp4': 'm4a',
+    'audio/wav': 'wav',
+    'audio/mpeg': 'mp3',
+    'audio/ogg': 'ogg',
+    'audio/m4a': 'm4a',
+    'audio/aac': 'aac'
+  };
+  return mimeMap[mimeType] || 'audio';
+};
+
 interface MessageInputProps {
   onSendMessage: (message: Omit<Message, 'id' | 'role' | 'timestamp'>, attachments: FileData[]) => void;
   isLoading: boolean;
@@ -108,6 +122,12 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading, o
       if (image.base64String) {
         const content = `data:image/jpeg;base64,${image.base64String}`;
         const fileData: FileData = { name: `photo-${Date.now()}.jpg`, type: 'image', content, readable: false };
+        console.log('📸 Camera photo captured:', { 
+          name: fileData.name, 
+          size: image.base64String.length,
+          format: 'JPEG',
+          quality: 90 
+        });
         setAttachments(prev => [...prev, fileData]);
       }
     } catch (error) {
@@ -178,7 +198,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading, o
               ref={fileInputRef}
               onChange={handleFileChange}
               className="hidden"
-              accept="image/*,text/plain,text/markdown,.pdf,.txt,.md"
+              accept="image/*,audio/*,text/*,.pdf,.doc,.docx,.txt,.md,.csv,.json,.rtf"
               multiple
           />
 
@@ -189,12 +209,19 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, isLoading, o
               onSend={() => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
+                  const extension = getExtensionFromMime(audioResult.mimeType);
                   const fileData: FileData = { 
-                    name: `voice-message-${Date.now()}.webm`, 
+                    name: `voice-message-${Date.now()}.${extension}`, 
                     type: 'audio', 
                     content: e.target?.result as string, 
                     readable: false 
                   };
+                  console.log('🎵 Audio message created:', { 
+                    name: fileData.name, 
+                    mimeType: audioResult.mimeType,
+                    duration: audioResult.duration,
+                    size: audioResult.blob.size 
+                  });
                   const allAttachments = [...attachments, fileData];
                   const messageToSend: Omit<Message, 'id' | 'role' | 'timestamp'> = {
                     content: text.trim(),

@@ -1,142 +1,100 @@
-import httpx
-import os
-import json
-from typing import AsyncGenerator, Dict, Any
-from dotenv import load_dotenv
-from . import chat_service, n8n_service
+import logging
+from typing import List, Dict, Any
+from fastapi import UploadFile
+from .n8n_service import invoke_workflow, invoke_workflow_multipart
+from .file_router_service import route_and_process_files, get_file_processing_summary
+from .context_generator_service import generate_infinite_context, get_context_statistics, calculate_total_tokens
 
-# Cargar variables de entorno
-load_dotenv()
+# Configuración básica de logging
+logger = logging.getLogger(__name__)
 
-# Obtener configuración desde variables de entorno
-OLLAMA_API_URL = os.getenv("OLLAMA_API_URL", "http://localhost:11434/api/chat")
-AGENT_ROUTER_MODEL = os.getenv("AGENT_ROUTER_MODEL", "llama3")
-
-async def classify_intent(user_prompt: str) -> str:
+async def orchestrate_agent_response(messages: List[Dict[str, str]], files: List[UploadFile]) -> Dict[str, Any]:
     """
-    Función asíncrona para determinar la intención del usuario.
+    Orquesta la respuesta del agente procesando archivos, generando contexto y enviando a N8N.
+    Implementa el flujo completo: Enrutador → Generador Contexto → N8N.
+    
+    TODO: OPTIMIZACIÓN DE RENDIMIENTO
+    - Implementar chat_id para identificar conversaciones únicas
+    - Usar cache de contexto para evitar regeneración innecesaria
+    - Implementar rate limiting por chat_id
+    - Agregar métricas de rendimiento (tiempo de procesamiento, tokens/segundo)
     
     Args:
-        user_prompt (str): El mensaje del usuario a clasificar
+        messages (List[Dict[str, str]]): Mensajes del chat
+        files (List[UploadFile]): Archivos adjuntos
         
     Returns:
-        str: La categoría de intención clasificada
+        Dict[str, Any]: Respuesta del agente o error
     """
-    # System prompt para clasificar la intención
-    system_prompt = """
-Eres un clasificador de intenciones. Tu trabajo es analizar el mensaje del usuario y determinar su intención.
+    logger.info(f"Orchestrator received {len(messages)} messages and {len(files)} files.")
 
-Categorías disponibles:
-- conversational_chat: Para conversaciones generales, preguntas, charla casual
-- sales_report_workflow: Para solicitudes relacionadas con reportes de ventas, análisis de ventas, datos comerciales
-
-Responde ÚNICAMENTE con una de estas categorías: conversational_chat o sales_report_workflow
-
-Ejemplos:
-- "Hola, ¿cómo estás?" -> conversational_chat
-- "¿Puedes ayudarme con algo?" -> conversational_chat
-- "Necesito un reporte de ventas" -> sales_report_workflow
-- "Muéstrame las ventas del mes" -> sales_report_workflow
-- "Genera un análisis de ventas" -> sales_report_workflow
-"""
-    
-    # Preparar mensajes para la clasificación
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt}
-    ]
-    
-    # Payload para petición no streaming
-    request_payload = {
-        "model": AGENT_ROUTER_MODEL,
-        "messages": messages,
-        "stream": False
-    }
-    
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        try:
-            # Realizar petición POST a Ollama (no streaming)
-            response = await client.post(
-                OLLAMA_API_URL,
-                json=request_payload
-            )
-            
-            response.raise_for_status()
-            result = response.json()
-            
-            # Extraer la categoría de la respuesta
-            if "message" in result and "content" in result["message"]:
-                intent = result["message"]["content"].strip().lower()
-                
-                # Validar que la respuesta sea una categoría válida
-                if "sales_report_workflow" in intent:
-                    return "sales_report_workflow"
-                else:
-                    return "conversational_chat"
-            
-            # Fallback por defecto
-            return "conversational_chat"
-            
-        except Exception as e:
-            # En caso de error, usar conversational_chat como fallback
-            print(f"Error en classify_intent: {e}")
-            return "conversational_chat"
-
-async def invoke_agent(request_data: dict) -> AsyncGenerator[str, None]:
-    """
-    Función generadora asíncrona principal que enruta las peticiones según la intención.
-    
-    Args:
-        request_data (dict): Datos de la petición que incluyen los mensajes
-        
-    Yields:
-        str: Chunks de respuesta según el tipo de intención
-    """
     try:
-        # Extraer mensajes del request_data
-        messages = request_data.get("messages", [])
+        # FASE 2: Enrutador de archivos - Procesar archivos según su tipo
+        processed_files = []
+        if files:
+            logger.info(f"Processing {len(files)} files through file router")
+            processed_files = await route_and_process_files(files)
+            logger.info(f"File processing completed: {len(processed_files)} files processed")
         
-        if not messages:
-            yield json.dumps({"error": "No se proporcionaron mensajes"}) + "\n"
-            return
+        # FASE 3: Generador de contexto infinito - Resumen automático con gemma3n:e4b
+        logger.info(f"Generating infinite context for {len(messages)} messages and {len(processed_files)} files")
         
-        # Obtener el último mensaje del usuario
-        last_message = messages[-1]
-        user_prompt = last_message.get("content", "")
+        # Obtener estadísticas del contexto antes de procesar
+        token_breakdown = calculate_total_tokens(messages, processed_files)
+        logger.info(f"Token breakdown: {token_breakdown['total_tokens']} total (mensajes: {token_breakdown['messages_tokens']}, imágenes: {token_breakdown['images_tokens']}, archivos: {token_breakdown['files_tokens']})")
         
-        if not user_prompt:
-            yield json.dumps({"error": "El último mensaje está vacío"}) + "\n"
-            return
+        # Generar contexto infinito con resumen automático
+        # TODO: Extraer chat_id del request o generar uno basado en hash de mensajes
+        # TODO: Implementar cache lookup antes de generar contexto
+        additional_context = "Eres Wuzi, un asistente AI multimodal inteligente. Analiza el contexto completo incluyendo mensajes, archivos adjuntos e imágenes para proporcionar respuestas útiles, precisas y contextualmente apropiadas."
+        infinite_context = await generate_infinite_context(messages, processed_files, additional_context)
+        # TODO: Guardar contexto generado en cache con TTL apropiado
         
-        # Clasificar la intención
-        intent = await classify_intent(user_prompt)
+        logger.info(f"Infinite context generated: {infinite_context['estimated_tokens']} tokens, {infinite_context['blocks_count']} bloques, resumen usado: {infinite_context['summary_used']}")
         
-        # Enrutar según la intención
-        if intent == "sales_report_workflow":
-            # Activar workflow de N8N para reporte de ventas
-            import time
-            params = {
-                "user_request": user_prompt,
-                "timestamp": str(int(time.time() * 1000))  # timestamp en ms
+        # Preparar datos para N8N con contexto infinito
+        context_data = {
+            "mode": "agent",
+            "context": infinite_context['context'],
+            "messages_count": infinite_context['messages_count'],
+            "files_count": infinite_context['files_count'],
+            "estimated_tokens": infinite_context['estimated_tokens'],
+            "within_limits": infinite_context['within_limits'],
+            "summary_used": infinite_context['summary_used'],
+            "blocks_count": infinite_context['blocks_count'],
+            "timestamp": infinite_context['timestamp'],
+            "original_messages": len(messages),
+            "token_breakdown": infinite_context['token_breakdown'],
+            "files_summary": get_file_processing_summary(processed_files) if processed_files else "No hay archivos adjuntos."
+        }
+        
+        # Enviar a N8N con contexto optimizado
+        if files:
+            # Usar multipart si hay archivos (mantener archivos originales para N8N)
+            form_fields = {
+                "context": infinite_context['context'],
+                "messages_count": str(infinite_context['messages_count']),
+                "files_count": str(len(processed_files)),
+                "estimated_tokens": str(infinite_context['estimated_tokens']),
+                "summary_used": str(infinite_context['summary_used']),
+                "blocks_count": str(infinite_context['blocks_count']),
+                "files_summary": context_data["files_summary"]
+            }
+            response = await invoke_workflow_multipart(form_fields, files)
+        else:
+            # Usar JSON si solo hay mensajes
+            response = await invoke_workflow(context_data)
+        
+        # Normalizar respuesta para asegurar que tenga 'content'
+        if isinstance(response, dict) and "content" in response:
+            return response
+        else:
+            return {
+                "content": f"Agente procesó {len(messages)} mensajes y {len(files)} archivos. Respuesta: {str(response)}"
             }
             
-            result = await n8n_service.trigger_sales_report(params)
-            
-            # Devolver resultado como un único chunk
-            yield json.dumps(result) + "\n"
-            
-        else:
-            # Por defecto: conversational_chat
-            # Usar el servicio de chat con streaming
-            async for chunk in chat_service.stream_chat_with_ollama(messages):
-                if chunk:
-                    # Formatear cada chunk como JSON
-                    chunk_data = {"content": chunk}
-                    yield json.dumps(chunk_data) + "\n"
-                    
     except Exception as e:
-        # Manejar errores generales
-        error_response = {
-            "error": f"Error en invoke_agent: {str(e)}"
+        logger.error(f"Error in agent orchestration: {e}", exc_info=True)
+        return {
+            "content": f"Error en el agente: {str(e)}. Por favor, intenta de nuevo o cambia a modo chat."
         }
-        yield json.dumps(error_response) + "\n"

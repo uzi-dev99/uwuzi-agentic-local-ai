@@ -37,6 +37,12 @@ export const useAudioRecorder = () => {
     setAudioResult(null);
 
     try {
+      const { status: currentStatus } = await VoiceRecorder.getCurrentStatus();
+      if (currentStatus === 'RECORDING') {
+        // Already recording, do nothing or handle as needed
+        return;
+      }
+
       const permission = await VoiceRecorder.requestAudioRecordingPermission();
       if (!permission.value) {
         setError('Microphone access was denied. Please enable it in the app settings.');

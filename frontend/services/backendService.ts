@@ -47,7 +47,7 @@ export async function invokeDirectChat({
       const formData = new FormData();
       formData.append('messages', JSON.stringify(backendMessages));
       files.forEach(file => {
-        formData.append('files', file);
+        formData.append('files', file, file.name);
       });
       response = await fetch(fullUrl, {
         method: 'POST',
@@ -87,13 +87,27 @@ export async function invokeDirectChat({
   }
 }
 
-// Nueva firma no-stream para invokeAgent con soporte de archivos (multipart)
+// Nueva firma no-stream para invokeAgent con soporte de archivos (JSON con Base64)
 interface InvokeAgentParams {
   messages: Message[];
   files: File[];
   onComplete: (response: { content: string }) => void;
   onError: (error: Error) => void;
   signal?: AbortSignal;
+}
+
+/**
+ * Convierte un objeto File a una cadena de datos URL en Base64.
+ * @param file - El archivo a convertir.
+ * @returns Una promesa que se resuelve con la cadena de datos URL.
+ */
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+    reader.readAsDataURL(file);
+  });
 }
 
 export async function invokeAgent({
@@ -115,29 +129,35 @@ export async function invokeAgent({
       content: msg.apiContent || msg.content
     }));
 
+    // Convertir archivos a formato de datos URL (Base64)
+    const fileUploads = await Promise.all(
+      files.map(async (file) => {
+        const fileData = await fileToDataUrl(file);
+        return {
+          filename: file.name,
+          content_type: file.type,
+          file_data: fileData,
+        };
+      })
+    );
+
     const fullUrl = `${backendUrl}/agent/invoke`;
-    let response: Response;
+    
+    const payload = {
+      messages: backendMessages,
+      file_uploads: fileUploads,
+    };
 
-    if (files.length > 0) {
-      const formData = new FormData();
-      formData.append('messages', JSON.stringify(backendMessages));
-      files.forEach(file => formData.append('files', file));
+    console.log(`🚀 Sending JSON request with ${fileUploads.length} files (Base64 encoded) to:`, fullUrl);
 
-      response = await fetch(fullUrl, {
-        method: 'POST',
-        body: formData,
-        signal,
-      });
-    } else {
-      response = await fetch(fullUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ messages: backendMessages }),
-        signal,
-      });
-    }
+    const response = await fetch(fullUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+      signal,
+    });
 
     if (!response.ok) {
       const errorBody = await response.text();

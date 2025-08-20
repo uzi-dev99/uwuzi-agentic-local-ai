@@ -7,7 +7,7 @@ export type ChatMode = 'agent' | 'chat';
 
 export interface Attachment {
   name: string;
-  type: 'image' | 'audio' | 'other';
+  type: 'image' | 'audio' | 'pdf-small' | 'pdf-large' | 'other';
   url: string;
 }
 
@@ -37,7 +37,7 @@ export interface Folder {
 
 export interface FileData {
   name: string;
-  type: 'image' | 'audio' | 'text' | 'other';
+  type: 'image' | 'audio' | 'text' | 'pdf-small' | 'pdf-large' | 'other';
   content: string; // Base64 data URL or text content
   readable: boolean;
 }
